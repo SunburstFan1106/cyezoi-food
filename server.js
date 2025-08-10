@@ -1,10 +1,13 @@
+const path = require('path');
 const express = require('express');
-const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 const User = require('./models/User');
 const Food = require('./models/Food');
+const Review = require('./models/Review');
 const { generateToken, verifyToken, requireAdmin, optionalAuth } = require('./middleware/auth');
 
 const app = express();
@@ -43,6 +46,15 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// 允许前端同源或本地调试
+app.use(cors({
+    origin: ['http://127.0.0.1:8000','http://localhost:8000'],
+    credentials: true
+}));
+
+// 静态资源
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 请求日志中间件
 app.use((req, res, next) => {
@@ -342,18 +354,12 @@ app.get('/api/foods', optionalAuth, async (req, res) => {
 app.post('/api/foods', verifyToken, async (req, res) => {
     try {
         console.log('🆕 添加新美食，用户:', req.user.username);
-        const { name, category, location, rating, description } = req.body;
-        
-        // 输入验证
-        if (!name || !category || !location || !rating || !description) {
-            console.log('❌ 添加失败: 缺少必要字段');
-            return res.status(400).json({
-                success: false,
-                message: '请填写完整的美食信息'
-            });
+        const { name, category, location, description, emoji } = req.body;
+
+        if (!name || !category || !location || !description) {
+            return res.status(400).json({ success: false, message: '缺少必要字段' });
         }
 
-        // emoji映射
         const categoryEmojiMap = {
             '面食': '🍜',
             '快餐': '🍔',
@@ -367,39 +373,25 @@ app.post('/api/foods', verifyToken, async (req, res) => {
             name: name.trim(),
             category,
             location: location.trim(),
-            rating: parseFloat(rating),
             description: description.trim(),
-            emoji: categoryEmojiMap[category] || '🍽️',
+            emoji: emoji || categoryEmojiMap[category] || '🍽️',
             createdBy: req.user._id,
-            createdByName: req.user.username,
-            reviews: 1
+            createdByName: req.user.username
+            // 统计字段走模型默认值
         });
 
         const savedFood = await newFood.save();
         await savedFood.populate('createdBy', 'username avatar');
-        
+
         console.log('✅ 美食添加成功:', savedFood.name);
         res.status(201).json({
             success: true,
-            message: '美食添加成功！感谢你的分享！',
+            message: '美食添加成功！',
             food: savedFood
         });
-
     } catch (error) {
         console.error('❌ 添加美食错误:', error);
-        
-        if (error.name === 'ValidationError') {
-            const errorMessages = Object.values(error.errors).map(err => err.message);
-            return res.status(400).json({
-                success: false,
-                message: errorMessages.join(', ')
-            });
-        }
-        
-        res.status(500).json({
-            success: false,
-            message: '添加美食失败，请稍后重试'
-        });
+        res.status(500).json({ success: false, message: '添加失败' });
     }
 });
 
@@ -430,6 +422,336 @@ app.delete('/api/foods/:id', verifyToken, requireAdmin, async (req, res) => {
         res.status(500).json({
             success: false,
             message: '删除美食失败'
+        });
+    }
+});
+
+// ================================
+// 评论相关路由
+// ================================
+
+// 获取美食的所有评论
+app.get('/api/foods/:foodId/reviews', async (req, res) => {
+    try {
+        console.log('💬 获取美食评论:', req.params.foodId);
+        
+        const { page = 1, limit = 10, sort = 'createdAt', order = 'desc' } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        
+        // 检查美食是否存在
+        const food = await Food.findById(req.params.foodId);
+        if (!food) {
+            return res.status(404).json({
+                success: false,
+                message: '美食不存在'
+            });
+        }
+        
+        const sortOrder = order === 'desc' ? -1 : 1;
+        const sortOptions = {};
+        sortOptions[sort] = sortOrder;
+        
+        // 获取评论列表
+        const reviews = await Review.find({ foodId: req.params.foodId })
+            .populate('userId', 'username avatar')
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(parseInt(limit))
+            .lean();
+        
+        // 获取总数
+        const total = await Review.countDocuments({ foodId: req.params.foodId });
+        
+        console.log('✅ 返回', reviews.length, '条评论');
+        res.json({
+            success: true,
+            reviews,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / parseInt(limit)),
+                totalReviews: total,
+                hasMore: skip + reviews.length < total
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ 获取评论错误:', error);
+        res.status(500).json({
+            success: false,
+            message: '获取评论失败'
+        });
+    }
+});
+
+// 添加评论
+app.post('/api/foods/:foodId/reviews', verifyToken, async (req, res) => {
+    try {
+        console.log('📝 添加评论，用户:', req.user.username);
+        const { content, rating } = req.body;
+        const foodId = req.params.foodId;
+        
+        // 输入验证
+        if (!content || !rating) {
+            return res.status(400).json({
+                success: false,
+                message: '评论内容和评分不能为空'
+            });
+        }
+        
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({
+                success: false,
+                message: '评分必须在1-5星之间'
+            });
+        }
+        
+        // 检查美食是否存在
+        const food = await Food.findById(foodId);
+        if (!food) {
+            return res.status(404).json({
+                success: false,
+                message: '美食不存在'
+            });
+        }
+        
+        // 检查用户是否已经评论过
+        const existingReview = await Review.findOne({ 
+            foodId, 
+            userId: req.user._id 
+        });
+        
+        if (existingReview) {
+            return res.status(400).json({
+                success: false,
+                message: '您已经评论过这个美食了，可以选择修改评论'
+            });
+        }
+        
+        // 创建新评论
+        const newReview = new Review({
+            foodId,
+            userId: req.user._id,
+            content: content.trim(),
+            rating: parseInt(rating)
+        });
+        
+        const savedReview = await newReview.save();
+        await savedReview.populate('userId', 'username avatar');
+        
+        // 重新计算美食的平均评分
+        await food.calculateRating();
+        
+        console.log('✅ 评论添加成功:', savedReview._id);
+        res.status(201).json({
+            success: true,
+            message: '评论添加成功！',
+            review: savedReview,
+            foodRating: {
+                averageRating: food.averageRating,
+                reviewsCount: food.reviewsCount
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ 添加评论错误:', error);
+        
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: '您已经评论过这个美食了'
+            });
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: '添加评论失败，请稍后重试'
+        });
+    }
+});
+
+// 更新评论 (只能修改自己的评论)
+app.put('/api/reviews/:reviewId', verifyToken, async (req, res) => {
+    try {
+        console.log('✏️ 修改评论:', req.params.reviewId);
+        const { content, rating } = req.body;
+        
+        const review = await Review.findById(req.params.reviewId);
+        if (!review) {
+            return res.status(404).json({
+                success: false,
+                message: '评论不存在'
+            });
+        }
+        
+        // 检查是否是评论作者
+        if (review.userId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: '只能修改自己的评论'
+            });
+        }
+        
+        // 更新评论
+        if (content) review.content = content.trim();
+        if (rating) {
+            if (rating < 1 || rating > 5) {
+                return res.status(400).json({
+                    success: false,
+                    message: '评分必须在1-5星之间'
+                });
+            }
+            review.rating = parseInt(rating);
+        }
+        
+        const updatedReview = await review.save();
+        await updatedReview.populate('userId', 'username avatar');
+        
+        // 重新计算美食评分
+        const food = await Food.findById(review.foodId);
+        if (food) {
+            await food.calculateRating();
+        }
+        
+        console.log('✅ 评论更新成功');
+        res.json({
+            success: true,
+            message: '评论更新成功！',
+            review: updatedReview
+        });
+        
+    } catch (error) {
+        console.error('❌ 更新评论错误:', error);
+        res.status(500).json({
+            success: false,
+            message: '更新评论失败'
+        });
+    }
+});
+
+// 删除评论 (作者或管理员)
+app.delete('/api/reviews/:reviewId', verifyToken, async (req, res) => {
+    try {
+        console.log('🗑️ 删除评论:', req.params.reviewId);
+        
+        const review = await Review.findById(req.params.reviewId);
+        if (!review) {
+            return res.status(404).json({
+                success: false,
+                message: '评论不存在'
+            });
+        }
+        
+        // 检查权限：评论作者或管理员可以删除
+        const isAuthor = review.userId.toString() === req.user._id.toString();
+        const isAdmin = req.user.role === 'admin';
+        
+        if (!isAuthor && !isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: '没有权限删除此评论'
+            });
+        }
+        
+        const foodId = review.foodId;
+        await Review.findByIdAndDelete(req.params.reviewId);
+        
+        // 重新计算美食评分
+        const food = await Food.findById(foodId);
+        if (food) {
+            await food.calculateRating();
+        }
+        
+        console.log('✅ 评论删除成功');
+        res.json({
+            success: true,
+            message: '评论删除成功'
+        });
+        
+    } catch (error) {
+        console.error('❌ 删除评论错误:', error);
+        res.status(500).json({
+            success: false,
+            message: '删除评论失败'
+        });
+    }
+});
+
+// 点赞/取消点赞评论
+app.post('/api/reviews/:reviewId/like', verifyToken, async (req, res) => {
+    try {
+        console.log('👍 点赞评论:', req.params.reviewId, '用户:', req.user.username);
+        
+        const review = await Review.findById(req.params.reviewId);
+        if (!review) {
+            return res.status(404).json({
+                success: false,
+                message: '评论不存在'
+            });
+        }
+        
+        const userId = req.user._id;
+        const isLiked = review.likes.includes(userId);
+        
+        if (isLiked) {
+            // 取消点赞
+            review.likes = review.likes.filter(id => id.toString() !== userId.toString());
+            console.log('✅ 取消点赞');
+        } else {
+            // 添加点赞
+            review.likes.push(userId);
+            console.log('✅ 添加点赞');
+        }
+        
+        await review.save();
+        
+        res.json({
+            success: true,
+            message: isLiked ? '取消点赞成功' : '点赞成功',
+            isLiked: !isLiked,
+            likesCount: review.likesCount
+        });
+        
+    } catch (error) {
+        console.error('❌ 点赞评论错误:', error);
+        res.status(500).json({
+            success: false,
+            message: '操作失败'
+        });
+    }
+});
+
+// 获取用户的所有评论
+app.get('/api/user/reviews', verifyToken, async (req, res) => {
+    try {
+        console.log('👤 获取用户评论:', req.user.username);
+        
+        const { page = 1, limit = 10 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        
+        const reviews = await Review.find({ userId: req.user._id })
+            .populate('foodId', 'name category location emoji')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(limit))
+            .lean();
+        
+        const total = await Review.countDocuments({ userId: req.user._id });
+        
+        res.json({
+            success: true,
+            reviews,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / parseInt(limit)),
+                totalReviews: total
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ 获取用户评论错误:', error);
+        res.status(500).json({
+            success: false,
+            message: '获取评论失败'
         });
     }
 });
@@ -529,4 +851,9 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
     console.error('🚨 未处理的Promise拒绝:', reason);
     process.exit(1);
+});
+
+// 前端路由兜底 (若不是单页应用可省略)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
