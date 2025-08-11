@@ -1,0 +1,22 @@
+# 依赖
+node_modules/
+
+# 构建产物
+build/
+dist/
+.tmp/
+
+# 环境及敏感
+.env
+.env.local
+cookies.txt
+
+# 编辑器
+.vscode/
+.idea/
+*.log
+
+# 临时
+.DS_Store
+*.swp
+.cph/
