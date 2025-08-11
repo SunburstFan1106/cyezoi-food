@@ -73,7 +73,7 @@ app.use((req, res, next) => {
 // ================================
 app.get('/', (req, res) => {
     res.json({
-        message: '🍔 曹杨二中美食评分系统 API',
+        message: '曹杨二中周边美食 API',
         version: '2.0.0',
         timestamp: new Date().toISOString(),
         features: ['用户认证系统', '美食管理', '权限控制', 'JWT认证'],
@@ -395,34 +395,67 @@ app.post('/api/foods', verifyToken, async (req, res) => {
     }
 });
 
-// 删除美食（仅管理员）
-app.delete('/api/foods/:id', verifyToken, requireAdmin, async (req, res) => {
+// 更新美食信息（作者或管理员）
+app.put('/api/foods/:id', verifyToken, async (req, res) => {
     try {
-        console.log('🗑️ 管理员删除美食:', req.params.id);
-        
-        const food = await Food.findById(req.params.id);
+        console.log('✏️ 更新美食:', req.params.id);
+        const { id } = req.params;
+        if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
+            return res.status(400).json({ success: false, message: '无效的ID格式' });
+        }
+        const food = await Food.findById(id);
         if (!food) {
-            console.log('❌ 美食不存在');
-            return res.status(404).json({
-                success: false,
-                message: '美食不存在'
-            });
+            return res.status(404).json({ success: false, message: '美食不存在' });
+        }
+        const isOwner = food.createdBy && food.createdBy.toString() === req.user._id.toString();
+        const isAdmin = req.user.role === 'admin';
+        if (!isOwner && !isAdmin) {
+            return res.status(403).json({ success: false, message: '无权限修改该美食' });
         }
 
-        await Food.findByIdAndDelete(req.params.id);
-        
-        console.log('✅ 美食删除成功:', food.name);
-        res.json({
-            success: true,
-            message: `美食"${food.name}"已删除`
-        });
+        const { name, category, location, description, emoji } = req.body;
+        const allowedCategories = ['面食', '快餐', '饮品', '小吃', '早餐', '其他'];
+        if (category && !allowedCategories.includes(category)) {
+            return res.status(400).json({ success: false, message: '无效的类别' });
+        }
+        if (name) food.name = name.trim();
+        if (category) food.category = category;
+        if (location) food.location = location.trim();
+        if (description) food.description = description.trim();
+        if (emoji) food.emoji = emoji;
+        await food.save();
+        await food.populate('createdBy', 'username avatar');
+        console.log('✅ 美食更新成功:', food.name);
+        res.json({ success: true, message: '美食更新成功', food });
+    } catch (error) {
+        console.error('❌ 更新美食错误:', error);
+        res.status(500).json({ success: false, message: '更新美食失败' });
+    }
+});
 
+// 删除美食（作者或管理员）
+app.delete('/api/foods/:id', verifyToken, async (req, res) => {
+    try {
+        console.log('🗑️ 删除美食:', req.params.id);
+        const { id } = req.params;
+        if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
+            return res.status(400).json({ success: false, message: '无效的ID格式' });
+        }
+        const food = await Food.findById(id);
+        if (!food) {
+            return res.status(404).json({ success: false, message: '美食不存在' });
+        }
+        const isOwner = food.createdBy && food.createdBy.toString() === req.user._id.toString();
+        const isAdmin = req.user.role === 'admin';
+        if (!isOwner && !isAdmin) {
+            return res.status(403).json({ success: false, message: '无权限删除该美食' });
+        }
+        await Food.findByIdAndDelete(id);
+        console.log('✅ 美食删除成功:', food.name);
+        res.json({ success: true, message: `美食"${food.name}"已删除` });
     } catch (error) {
         console.error('❌ 删除美食错误:', error);
-        res.status(500).json({
-            success: false,
-            message: '删除美食失败'
-        });
+        res.status(500).json({ success: false, message: '删除美食失败' });
     }
 });
 

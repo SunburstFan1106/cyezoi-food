@@ -1,4 +1,3 @@
-/* filepath: /Users/fengzhifan/cyezoi-food/public/app.js */
 class App {
     constructor() {
         this.foods = [];
@@ -139,7 +138,7 @@ class App {
             return `
                 <div class="container">
                     <div class="header">
-                        <h1>🍔 曹杨二中美食评分系统</h1>
+                        <h1>曹杨二中周边美食</h1>
                         <div style="text-align: center; margin-top: 20px;">
                             <button onclick="app.showAuth()" class="auth-btn" style="width: auto; padding: 15px 30px;">
                                 登录 / 注册
@@ -154,7 +153,7 @@ class App {
         return `
             <div class="container">
                 <div class="header">
-                    <h1>🍔 曹杨二中美食评分系统</h1>
+                    <h1>曹杨二中周边美食</h1>
                     <div class="user-info">
                         <div class="user-profile">
                             <div class="user-avatar">${this.currentUser.avatar}</div>
@@ -181,7 +180,6 @@ class App {
         `;
     }
 
-    // 新增: 添加美食模态框 HTML
     renderAddFoodModal() {
         if (!this.addFoodModalVisible) return '';
         return `
@@ -341,6 +339,8 @@ class App {
             showError('网络错误，请稍后再试');
         }
     }
+
+    
 
     bindEvents() {
         // 认证表单提交
@@ -557,7 +557,8 @@ class App {
             if (foodName.includes(searchTerm) || 
                 foodCategory.includes(searchTerm) || 
                 foodLocation.includes(searchTerm)) {
-                card.style.display = 'block';
+                // 恢复默认（CSS 中是 display:flex），避免被 block 破坏居中
+                card.style.display = '';
             } else {
                 card.style.display = 'none';
             }
@@ -569,7 +570,7 @@ class App {
         
         foodCards.forEach(card => {
             if (category === 'all' || card.dataset.category === category) {
-                card.style.display = 'block';
+                card.style.display = '';
             } else {
                 card.style.display = 'none';
             }
@@ -881,11 +882,13 @@ class App {
 
         if (!content) {
             alert('请填写评论内容');
+            content = '请填写评论内容';
             return;
         }
 
         if (rating === 0) {
             alert('请选择评分');
+            rating = 5;
             return;
         }
 
@@ -939,7 +942,6 @@ class App {
             const result = await response.json();
 
             if (response.ok) {
-                // 重新加载当前页的评论
                 await this.loadReviews(this.currentFoodId, this.reviewsPage);
             } else {
                 alert(result.message);
@@ -966,10 +968,9 @@ class App {
             if (response.ok) {
                 alert(result.message);
                 await this.loadReviews(this.currentFoodId, this.reviewsPage);
-                await this.loadFoods(); // 更新美食评分
+                await this.loadFoods(); 
                 this.render();
                 this.bindEvents();
-                // 重新打开模态框
                 setTimeout(() => {
                     this.openReviewModal(this.currentFoodId, '当前美食');
                 }, 100);
@@ -981,9 +982,6 @@ class App {
             alert('删除失败，请重试');
         }
     }
-
-    // 美食管理
-    // 找到 showAddFoodForm 方法并完全替换为以下代码：
 
     async showAddFoodForm() {
         if (!this.currentUser) {
@@ -997,7 +995,7 @@ class App {
 
         const category = prompt('请输入美食类别 (面食/快餐/饮品/小吃/早餐/其他):');
         if (!category || !category.trim()) return;
-
+        
         const validCategories = ['面食', '快餐', '饮品', '小吃', '早餐', '其他'];
         const normalizedCategory = category.trim();
         if (!validCategories.includes(normalizedCategory)) {
@@ -1025,16 +1023,15 @@ class App {
             category: normalizedCategory,
             location: location.trim(),
             description: description.trim(),
-            emoji: categoryEmojiMap[normalizedCategory] || '🍽️'
+            emoji: categoryEmojiMap[normalizedCategory] || '🍽️',
+            createdByName: this.currentUser?.username || this.currentUser?.email || undefined
         };
 
-        // 可能缺的统计类字段默认值（猜测后端要求）
         const statDefaults = {
             averageRating: 0,
             reviewsCount: 0,
             totalRating: 0,
             ratingDistribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
-            // 若后端要求列表：
             reviews: []
         };
 
@@ -1052,10 +1049,8 @@ class App {
         };
 
         try {
-            // 第一次：最小字段
             let { response, result } = await tryCreate(basePayload, '最小字段');
 
-            // 如果提示缺少必要字段，再带上推测的默认统计字段重试一次
             if (!response.ok && result?.message && result.message.includes('缺少必要字段')) {
                 const extendedPayload = { ...basePayload, ...statDefaults };
                 ({ response, result } = await tryCreate(extendedPayload, '含默认统计字段重试'));
@@ -1084,9 +1079,13 @@ class App {
 
     // 找到 showEditFoodForm 方法并完全替换为以下代码：
     async deleteFood(foodId) {
-        if (!confirm('确定要删除这个美食吗？此操作不可恢复！')) {
+        const food = this.foods.find(f => f._id === foodId);
+        const ownerId = food?.createdBy?._id || food?.createdBy || food?.recommendedBy;
+        if (!(this.currentUser && (this.currentUser.role === 'admin' || (ownerId && String(ownerId) === String(this.currentUser.id))))) {
+            alert('无权限删除该美食');
             return;
         }
+        if (!confirm('确定要删除这个美食吗？此操作不可恢复！')) return;
 
         try {
             const response = await fetch(`${this.apiUrl}/foods/${foodId}`, {
@@ -1139,7 +1138,12 @@ class App {
             : food.averageRating || 0;
         const reviewsCount = food.reviewsCount ?? food.reviews?.length ?? 0;
         const emoji = food.emoji || this.categoryEmojiMap[category] || '🍽️';
-        const canDelete = this.currentUser && this.currentUser.role === 'admin';
+    // 贡献者与权限（createdBy / createdByName 来自后端）
+    const contributorId = food.createdBy?._id || food.createdBy || food.recommendedBy; // 兼容旧字段
+    const contributorName = food.createdByName || food.createdBy?.username || food.createdBy?.email || '匿名';
+    const isOwner = this.currentUser && contributorId && String(contributorId) === String(this.currentUser.id);
+    const canEdit = isOwner; // 推荐者可编辑
+    const canDelete = this.currentUser && (this.currentUser.role === 'admin' || isOwner);
 
         return `
             <div class="food-card" data-category="${category}">
@@ -1148,6 +1152,9 @@ class App {
                 <div class="food-meta">
                     <span>${category}</span>
                     <span>${location}</span>
+                </div>
+                <div class="food-meta" style="margin-top:4px; font-size:10px; opacity:.75;">
+                    <span>贡献者: ${contributorName}</span>
                 </div>
                 <div class="food-stats">
                     <span>⭐ ${avg}</span>
@@ -1158,10 +1165,73 @@ class App {
                     <button onclick="app.openReviewModal('${id}','${name.replace(/'/g, '')}')">
                         查看 / 评价
                     </button>
+                    ${canEdit ? `<button onclick="app.openEditFoodModal('${id}')">编辑</button>` : ''}
                     ${canDelete ? `<button class="danger" onclick="app.deleteFood('${id}')">删除</button>` : ''}
                 </div>
             </div>
         `;
+    }
+
+    async openEditFoodModal(foodId) {
+        const food = this.foods.find(f => f._id === foodId);
+        if (!food) {
+            alert('找不到要编辑的美食');
+            return;
+        }
+        const ownerId = food.createdBy?._id || food.createdBy || food.recommendedBy;
+        if (!(this.currentUser && (this.currentUser.role === 'admin' || (ownerId && String(ownerId) === String(this.currentUser.id))))) {
+            alert('无权限编辑该美食');
+            return;
+        }
+
+        const name = prompt('请输入新的美食名称:', food.name);
+        if (!name || !name.trim()) return;
+
+        const category = prompt('请输入新的美食类别 (面食/快餐/饮品/小吃/早餐/其他):', food.category);
+        if (!category || !category.trim()) return;
+
+        const validCategories = ['面食', '快餐', '饮品', '小吃', '早餐', '其他'];
+        const normalizedCategory = category.trim();
+        if (!validCategories.includes(normalizedCategory)) {
+            alert('请输入有效的美食类别: ' + validCategories.join('、'));
+            return;
+        }
+
+        const location = prompt('请输入新的位置:', food.location);
+        if (!location || !location.trim()) return;
+
+        const description = prompt('请输入新的描述:', food.description);
+        if (!description || !description.trim()) return;
+
+        const payload = {
+            name: name.trim(),
+            category: normalizedCategory,
+            location: location.trim(),
+            description: description.trim()
+        };
+
+        try {
+            const response = await fetch(`${this.apiUrl}/foods/${foodId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('美食信息更新成功！');
+                await this.loadFoods();
+                this.render();
+                this.bindEvents();
+            } else {
+                alert(result.message || '更新失败');
+            }
+        } catch (error) {
+            console.error('❌ 更新美食失败:', error);
+            alert('更新失败，请检查网络连接');
+        }
     }
 }
 

@@ -20,7 +20,6 @@ const reviewSchema = new mongoose.Schema({
         maxlength: [500, '评论最多500个字符'],
         trim: true
     },
-    // 评分 (1-5星)
     rating: {
         type: Number,
         required: [true, '评分不能为空'],

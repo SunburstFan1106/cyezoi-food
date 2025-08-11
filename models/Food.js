@@ -12,9 +12,8 @@ const FoodSchema = new mongoose.Schema({
     location: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
     emoji: { type: String, default: '🍽️' },
-    // 统计字段
     averageRating: { type: Number, default: 0 },
-    totalRating: { type: Number, default: 0 }, // 累积评分之和（可选使用）
+    totalRating: { type: Number, default: 0 },
     reviewsCount: { type: Number, default: 0 },
     ratingDistribution: {
         type: Map,
@@ -22,7 +21,7 @@ const FoodSchema = new mongoose.Schema({
         default: () => ratingDistributionDefault
     },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    createdByName: { type: String } // 可选：如果不需要可以删除
+    createdByName: { type: String } 
 }, {
     timestamps: true
 });
