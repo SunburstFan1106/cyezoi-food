@@ -1,4 +1,4 @@
-·# School Food Rating
+# School Food Rating
 
 欢迎来到学校周边美食打分网站的项目！该项目旨在为用户提供一个平台，以便他们能够对学校周边的美食进行评分和评论。
 
