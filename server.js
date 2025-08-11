@@ -30,7 +30,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/cyezoi-fo
 // 中间件设置
 app.use((req, res, next) => {
     // CORS配置
-    res.header('Access-Control-Allow-Origin', 'http://localhost:4000');
+    // res.header('Access-Control-Allow-Origin', 'http://localhost:4000');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
     res.header('Access-Control-Allow-Credentials', 'true');
@@ -49,7 +49,7 @@ app.use(cookieParser());
 
 // 允许前端同源或本地调试
 app.use(cors({
-    origin: ['http://127.0.0.1:8000','http://localhost:8000'],
+    origin: ['http://127.0.0.1:8000','http://localhost:8000','https://food.cyezoi.com'],
     credentials: true
 }));
 

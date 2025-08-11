@@ -5,7 +5,7 @@ class App {
         this.currentUser = null;
         this.currentView = 'main';
         this.authMode = 'login';
-        this.apiUrl = 'http://127.0.0.1:8000/api';
+        this.apiUrl = 'api';
         this.currentFoodId = null;
         this.currentFoodName = null;
         this.currentRating = 0;
