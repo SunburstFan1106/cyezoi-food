@@ -1,110 +1,116 @@
 class App {
-    constructor() {
+  constructor() {
+    this.foods = [];
+    this.currentUser = null;
+    this.currentView = "main";
+    this.authMode = "login";
+    this.apiUrl = "api";
+    this.currentFoodId = null;
+    this.currentFoodName = null;
+    this.currentRating = 0;
+    this.currentReviews = [];
+    this.reviewsPage = 1;
+    this.reviewsTotal = 0;
+    this.editingReviewId = null;
+    this.editRating = 0;
+
+    // 新增: 添加美食相关
+    this.addFoodModalVisible = false;
+    this.validCategories = ["面食", "快餐", "饮品", "小吃", "早餐", "其他"];
+    this.categoryEmojiMap = {
+      面食: "🍜",
+      快餐: "🍔",
+      饮品: "🧋",
+      小吃: "🍗",
+      早餐: "🥞",
+      其他: "🍽️",
+    };
+
+    this.init();
+  }
+
+  async init() {
+    console.log("🚀 应用初始化开始...");
+    await this.checkAuth();
+    if (this.currentUser) {
+      await this.loadFoods();
+    }
+    this.render();
+    this.bindEvents();
+    console.log("✅ 应用初始化完成");
+  }
+
+  async checkAuth() {
+    try {
+      const response = await fetch(`${this.apiUrl}/auth/me`, {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        this.currentUser = result.user;
+        this.currentView = "main";
+        console.log("✅ 用户已登录:", this.currentUser.username);
+      } else {
+        this.currentView = "auth";
+        console.log("❌ 用户未登录");
+      }
+    } catch (error) {
+      console.error("❌ 检查登录状态失败:", error);
+      this.currentView = "auth";
+    }
+  }
+
+  async loadFoods() {
+    try {
+      console.log("📥 加载美食数据...");
+      const response = await fetch(`${this.apiUrl}/foods`, {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        this.foods = await response.json();
+        console.log(`✅ 成功加载 ${this.foods.length} 个美食数据`);
+      } else {
+        console.error("❌ 加载美食数据失败");
         this.foods = [];
-        this.currentUser = null;
-        this.currentView = 'main';
-        this.authMode = 'login';
-        this.apiUrl = 'api';
-        this.currentFoodId = null;
-        this.currentFoodName = null;
-        this.currentRating = 0;
-        this.currentReviews = [];
-        this.reviewsPage = 1;
-        this.reviewsTotal = 0;
-        this.editingReviewId = null;
-        this.editRating = 0;
-
-        // 新增: 添加美食相关
-        this.addFoodModalVisible = false;
-        this.validCategories = ['面食', '快餐', '饮品', '小吃', '早餐', '其他'];
-        this.categoryEmojiMap = {
-            '面食': '🍜',
-            '快餐': '🍔',
-            '饮品': '🧋',
-            '小吃': '🍗',
-            '早餐': '🥞',
-            '其他': '🍽️'
-        };
-
-        this.init();
+      }
+    } catch (error) {
+      console.error("❌ 网络请求失败:", error);
+      this.foods = [];
     }
+  }
 
-    async init() {
-        console.log('🚀 应用初始化开始...');
-        await this.checkAuth();
-        if (this.currentUser) {
-            await this.loadFoods();
-        }
-        this.render();
-        this.bindEvents();
-        console.log('✅ 应用初始化完成');
+  render() {
+    const root = document.getElementById("app-root") || document.body;
+    let html = "";
+    if (this.currentUser) {
+      html = this.renderMain();
+    } else {
+      html = this.renderAuth();
     }
+    root.innerHTML = html;
+  }
 
-    async checkAuth() {
-        try {
-            const response = await fetch(`${this.apiUrl}/auth/me`, {
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                this.currentUser = result.user;
-                this.currentView = 'main';
-                console.log('✅ 用户已登录:', this.currentUser.username);
-            } else {
-                this.currentView = 'auth';
-                console.log('❌ 用户未登录');
-            }
-        } catch (error) {
-            console.error('❌ 检查登录状态失败:', error);
-            this.currentView = 'auth';
-        }
-    }
-
-    async loadFoods() {
-        try {
-            console.log('📥 加载美食数据...');
-            const response = await fetch(`${this.apiUrl}/foods`, {
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                this.foods = await response.json();
-                console.log(`✅ 成功加载 ${this.foods.length} 个美食数据`);
-            } else {
-                console.error('❌ 加载美食数据失败');
-                this.foods = [];
-            }
-        } catch (error) {
-            console.error('❌ 网络请求失败:', error);
-            this.foods = [];
-        }
-    }
-
-    render() {
-        const root = document.getElementById('app-root') || document.body;
-        let html = '';
-        if (this.currentUser) {
-            html = this.renderMain();
-        } else {
-            html = this.renderAuth();
-        }
-        root.innerHTML = html;
-    }
-
-    renderAuth() {
-        const isLogin = this.authMode === 'login';
-        return `
+  renderAuth() {
+    const isLogin = this.authMode === "login";
+    return `
             <div class="auth-container">
                 <form class="auth-form" id="authForm">
-                    <h2 class="auth-title">${isLogin ? '🍔 登录' : '📝 注册'}</h2>
+                    <h2 class="auth-title">${
+                      isLogin ? "🍔 登录" : "📝 注册"
+                    }</h2>
                     
-                    ${!isLogin ? `
+                    ${
+                      !isLogin
+                        ? `
                         <div class="form-group">
                             <label class="form-label">用户名</label>
                             <input type="text" name="username" class="form-input" required>
                         </div>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                     
                     <div class="form-group">
                         <label class="form-label">邮箱</label>
@@ -117,13 +123,13 @@ class App {
                     </div>
                     
                     <button type="submit" class="auth-btn">
-                        ${isLogin ? '登录' : '注册'}
+                        ${isLogin ? "登录" : "注册"}
                     </button>
                     
                     <div class="auth-switch">
-                        ${isLogin ? '还没有账户？' : '已有账户？'}
+                        ${isLogin ? "还没有账户？" : "已有账户？"}
                         <a href="#" onclick="app.toggleAuthMode()">
-                            ${isLogin ? '立即注册' : '立即登录'}
+                            ${isLogin ? "立即注册" : "立即登录"}
                         </a>
                     </div>
                     
@@ -131,11 +137,11 @@ class App {
                 </form>
             </div>
         `;
-    }
+  }
 
-    renderMain() {
-        if (!this.currentUser) {
-            return `
+  renderMain() {
+    if (!this.currentUser) {
+      return `
                 <div class="container">
                     <div class="header">
                         <h1>曹杨二中周边美食</h1>
@@ -148,17 +154,23 @@ class App {
                     ${this.renderFoodsGrid()}
                 </div>
             `;
-        }
+    }
 
-        return `
+    return `
             <div class="container">
                 <div class="header">
                     <h1>曹杨二中周边美食</h1>
                     <div class="user-info">
                         <div class="user-profile">
-                            <div class="user-avatar">${this.currentUser.avatar}</div>
+                            <div class="user-avatar">${
+                              this.currentUser.avatar
+                            }</div>
                             <span>欢迎，${this.currentUser.username}!</span>
-                            ${this.currentUser.role === 'admin' ? '<span style="color:#e74c3c;">👑 管理员</span>' : ''}
+                            ${
+                              this.currentUser.role === "admin"
+                                ? '<span style="color:#e74c3c;">👑 管理员</span>'
+                                : ""
+                            }
                         </div>
                         <button class="logout-btn" onclick="app.logout()">退出登录</button>
                     </div>
@@ -168,8 +180,14 @@ class App {
                     <input type="text" class="search-box" id="searchInput" placeholder="搜索美食、位置...">
                     <select class="filter-select" id="categoryFilter">
                         <option value="all">全部类别</option>
-                        ${this.validCategories.map(c => `<option value="${c}">${this.categoryEmojiMap[c]} ${c}</option>`).join('')}
+                        ${this.validCategories
+                          .map(
+                            (c) =>
+                              `<option value="${c}">${this.categoryEmojiMap[c]} ${c}</option>`
+                          )
+                          .join("")}
                     </select>
+                    <button class="daily-recommendation-btn" onclick="app.getTodayRecommendation()">🎯 今天吃什么</button>
                     <button class="add-food-btn" onclick="app.openAddFoodModal()">+ 推荐美食</button>
                 </div>
 
@@ -178,11 +196,11 @@ class App {
 
             ${this.renderAddFoodModal()}
         `;
-    }
+  }
 
-    renderAddFoodModal() {
-        if (!this.addFoodModalVisible) return '';
-        return `
+  renderAddFoodModal() {
+    if (!this.addFoodModalVisible) return "";
+    return `
             <div class="modal visible" id="addFoodModal">
                 <div class="modal-content">
                     <span class="close" onclick="app.closeAddFoodModal()">&times;</span>
@@ -196,7 +214,12 @@ class App {
                             <label>类别</label>
                             <select name="category" required>
                                 <option value="">请选择</option>
-                                ${this.validCategories.map(c => `<option value="${c}">${this.categoryEmojiMap[c]} ${c}</option>`).join('')}
+                                ${this.validCategories
+                                  .map(
+                                    (c) =>
+                                      `<option value="${c}">${this.categoryEmojiMap[c]} ${c}</option>`
+                                  )
+                                  .join("")}
                             </select>
                         </div>
                         <div class="form-group">
@@ -220,932 +243,1211 @@ class App {
                 </div>
             </div>
         `;
+  }
+
+  openAddFoodModal() {
+    if (!this.currentUser) {
+      alert("请先登录");
+      this.showAuth();
+      return;
+    }
+    this.addFoodModalVisible = true;
+    this.render();
+    this.bindEvents();
+  }
+
+  closeAddFoodModal() {
+    this.addFoodModalVisible = false;
+    this.render();
+    this.bindEvents();
+  }
+
+  // 替换旧 showAddFoodForm 逻辑
+  async submitNewFood(formElement) {
+    const formData = new FormData(formElement);
+    const name = formData.get("name").trim();
+    const category = formData.get("category").trim();
+    const location = formData.get("location").trim();
+    const description = formData.get("description").trim();
+    const emojiInput = formData.get("emoji").trim();
+
+    const errorEl = document.getElementById("addFoodError");
+    const showError = (msg) => {
+      if (errorEl) {
+        errorEl.style.display = "block";
+        errorEl.textContent = msg;
+      } else {
+        alert(msg);
+      }
+    };
+
+    errorEl && (errorEl.style.display = "none");
+
+    if (!name || !category || !location || !description) {
+      showError("请填写所有必填字段");
+      return;
+    }
+    if (!this.validCategories.includes(category)) {
+      showError("类别不合法");
+      return;
     }
 
-    openAddFoodModal() {
-        if (!this.currentUser) {
-            alert('请先登录');
-            this.showAuth();
+    // 若用户未改 emoji，自动按类别填
+    const emoji = emojiInput || this.categoryEmojiMap[category] || "🍽️";
+
+    const payload = { name, category, location, description, emoji };
+
+    console.log("📤 创建美食(表单):", payload);
+
+    try {
+      const response = await fetch(`${this.apiUrl}/foods`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      console.log("📡 创建响应:", result);
+
+      if (!response.ok) {
+        // 如果后端仍提示缺少统计字段, 再补一次默认值自动重试
+        if (result?.message?.includes("缺少必要字段")) {
+          const withStats = {
+            ...payload,
+            averageRating: 0,
+            reviewsCount: 0,
+            totalRating: 0,
+            ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+          };
+          console.log("♻️ 重试携带统计字段:", withStats);
+          const retryResp = await fetch(`${this.apiUrl}/foods`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(withStats),
+          });
+          const retryResult = await retryResp.json().catch(() => ({}));
+          console.log("📡 重试响应:", retryResult);
+          if (!retryResp.ok) {
+            showError(retryResult.message || "创建失败");
             return;
+          }
+          alert("美食添加成功！");
+          if (retryResult.food && retryResult.food._id) {
+            this.foods.push(retryResult.food);
+          } else {
+            await this.loadFoods();
+          }
+          this.closeAddFoodModal();
+          this.render();
+          this.bindEvents();
+          return;
         }
-        this.addFoodModalVisible = true;
+
+        showError(result.message || "创建失败");
+        return;
+      }
+
+      alert("美食添加成功！");
+      if (result.food && result.food._id) {
+        this.foods.push(result.food);
+      } else {
+        await this.loadFoods();
+      }
+      this.closeAddFoodModal();
+      this.render();
+      this.bindEvents();
+    } catch (e) {
+      console.error("❌ 创建失败:", e);
+      showError("网络错误，请稍后再试");
+    }
+  }
+
+  bindEvents() {
+    // 认证表单提交
+    const authForm = document.getElementById("authForm");
+    if (authForm) {
+      authForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.handleAuth(e);
+      });
+    }
+
+    // 搜索功能
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        this.handleSearch();
+      });
+    }
+
+    // 分类筛选
+    const categoryFilter = document.getElementById("categoryFilter");
+    if (categoryFilter) {
+      categoryFilter.addEventListener("change", (e) => {
+        this.handleFilter(e.target.value);
+      });
+    }
+
+    // 评论表单提交
+    const reviewForm = document.getElementById("reviewForm");
+    if (reviewForm) {
+      reviewForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.submitReview();
+      });
+    }
+
+    // 编辑评论表单提交
+    const editReviewForm = document.getElementById("editReviewForm");
+    if (editReviewForm) {
+      editReviewForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.updateReview();
+      });
+    }
+
+    // 新增评论星级评分点击事件
+    this.bindStarRating("starRating", (rating) => {
+      this.setRating(rating);
+    });
+
+    // 编辑评论星级评分点击事件
+    this.bindStarRating("editStarRating", (rating) => {
+      this.setEditRating(rating);
+    });
+
+    // 模态框外部点击关闭
+    const modal = document.getElementById("reviewModal");
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          this.closeReviewModal();
+        }
+      });
+    }
+
+    const editModal = document.getElementById("editReviewModal");
+    if (editModal) {
+      editModal.addEventListener("click", (e) => {
+        if (e.target === editModal) {
+          this.closeEditReviewModal();
+        }
+      });
+    }
+
+    // 添加美食表单提交
+    const addFoodForm = document.getElementById("addFoodForm");
+    if (addFoodForm) {
+      addFoodForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        this.submitNewFood(addFoodForm);
+      });
+
+      // 类别选择联动 emoji（若用户没手动改）
+      const categorySelect = addFoodForm.querySelector(
+        'select[name="category"]'
+      );
+      const emojiInput = addFoodForm.querySelector('input[name="emoji"]');
+      if (categorySelect && emojiInput) {
+        categorySelect.addEventListener("change", () => {
+          if (
+            !emojiInput.value ||
+            Object.values(this.categoryEmojiMap).includes(emojiInput.value)
+          ) {
+            emojiInput.value =
+              this.categoryEmojiMap[categorySelect.value] || "🍽️";
+          }
+        });
+      }
+    }
+  }
+
+  // 绑定星级评分事件的通用方法
+  bindStarRating(starRatingId, callback) {
+    const starRating = document.getElementById(starRatingId);
+    if (!starRating) return;
+
+    const stars = starRating.querySelectorAll(".star");
+
+    stars.forEach((star) => {
+      // 点击事件
+      star.addEventListener("click", (e) => {
+        const rating = parseInt(e.target.dataset.rating);
+        callback(rating);
+      });
+
+      // 悬停预览
+      star.addEventListener("mouseover", (e) => {
+        const rating = parseInt(e.target.dataset.rating);
+        this.previewRating(starRatingId, rating);
+      });
+    });
+
+    // 鼠标离开重置预览
+    starRating.addEventListener("mouseleave", () => {
+      const currentRating =
+        starRatingId === "starRating" ? this.currentRating : this.editRating;
+      this.previewRating(starRatingId, currentRating);
+    });
+  }
+
+  // 渲染星级评分显示
+  renderStars(rating) {
+    if (!rating || rating <= 0) {
+      return '<span class="no-rating">暂无评分</span>';
+    }
+
+    // 确保评分在1-5之间
+    const normalizedRating = Math.max(1, Math.min(5, Math.round(rating)));
+    return "⭐".repeat(normalizedRating);
+  }
+
+  // 认证相关方法
+  async handleAuth(e) {
+    const formData = new FormData(e.target);
+    const isLogin = this.authMode === "login";
+
+    const userData = {
+      email: formData.get("email"),
+      password: formData.get("password"),
+    };
+
+    if (!isLogin) {
+      userData.username = formData.get("username");
+    }
+
+    console.log("📤 发送认证请求:", { ...userData, password: "[隐藏]" });
+
+    try {
+      const response = await fetch(
+        `${this.apiUrl}/auth/${isLogin ? "login" : "register"}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(userData),
+        }
+      );
+
+      const result = await response.json();
+      console.log("📡 服务器响应:", result);
+
+      if (response.ok) {
+        this.currentUser = result.user;
+        this.currentView = "main";
+        alert(result.message);
+        await this.loadFoods();
         this.render();
         this.bindEvents();
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("❌ 认证请求失败:", error);
+      alert("网络连接失败，请重试");
     }
+  }
 
-    closeAddFoodModal() {
-        this.addFoodModalVisible = false;
-        this.render();
-        this.bindEvents();
+  toggleAuthMode() {
+    this.authMode = this.authMode === "login" ? "register" : "login";
+    this.render();
+    this.bindEvents();
+  }
+
+  showAuth() {
+    this.currentView = "auth";
+    this.render();
+    this.bindEvents();
+  }
+
+  showMainView() {
+    this.currentView = "main";
+    this.render();
+    this.bindEvents();
+  }
+
+  async logout() {
+    try {
+      await fetch(`${this.apiUrl}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      this.currentUser = null;
+      this.currentView = "auth";
+      this.render();
+      this.bindEvents();
+      alert("已安全退出登录");
+    } catch (error) {
+      console.error("❌ 退出登录失败:", error);
     }
+  }
 
-    // 替换旧 showAddFoodForm 逻辑
-    async submitNewFood(formElement) {
-        const formData = new FormData(formElement);
-        const name = formData.get('name').trim();
-        const category = formData.get('category').trim();
-        const location = formData.get('location').trim();
-        const description = formData.get('description').trim();
-        const emojiInput = formData.get('emoji').trim();
+  // 今天吃什么功能
+  async getTodayRecommendation() {
+    try {
+      console.log("🎯 获取今日推荐...");
 
-        const errorEl = document.getElementById('addFoodError');
-        const showError = (msg) => {
-            if (errorEl) {
-                errorEl.style.display = 'block';
-                errorEl.textContent = msg;
-            } else {
-                alert(msg);
-            }
-        };
+      // 显示加载状态
+      const button = document.querySelector(".daily-recommendation-btn");
+      const originalText = button.textContent;
+      button.textContent = "🔄 推荐中...";
+      button.disabled = true;
 
-        errorEl && (errorEl.style.display = 'none');
+      const response = await fetch(`${this.apiUrl}/daily-recommendation`, {
+        credentials: "include",
+      });
 
-        if (!name || !category || !location || !description) {
-            showError('请填写所有必填字段');
-            return;
-        }
-        if (!this.validCategories.includes(category)) {
-            showError('类别不合法');
-            return;
-        }
+      const result = await response.json();
 
-        // 若用户未改 emoji，自动按类别填
-        const emoji = emojiInput || this.categoryEmojiMap[category] || '🍽️';
+      // 恢复按钮状态
+      button.textContent = originalText;
+      button.disabled = false;
 
-        const payload = { name, category, location, description, emoji };
+      if (response.ok && result.success) {
+        this.showRecommendationModal(
+          result.food,
+          result.message,
+          result.isNewRecommendation
+        );
+      } else {
+        alert(result.message || "获取推荐失败，请稍后重试");
+      }
+    } catch (error) {
+      console.error("❌ 获取今日推荐失败:", error);
+      alert("网络错误，请稍后重试");
 
-        console.log('📤 创建美食(表单):', payload);
+      // 恢复按钮状态
+      const button = document.querySelector(".daily-recommendation-btn");
+      button.textContent = "🎯 今天吃什么";
+      button.disabled = false;
+    }
+  }
 
-        try {
-            const response = await fetch(`${this.apiUrl}/foods`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json().catch(() => ({}));
-            console.log('📡 创建响应:', result);
-
-            if (!response.ok) {
-                // 如果后端仍提示缺少统计字段, 再补一次默认值自动重试
-                if (result?.message?.includes('缺少必要字段')) {
-                    const withStats = {
-                        ...payload,
-                        averageRating: 0,
-                        reviewsCount: 0,
-                        totalRating: 0,
-                        ratingDistribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 }
-                    };
-                    console.log('♻️ 重试携带统计字段:', withStats);
-                    const retryResp = await fetch(`${this.apiUrl}/foods`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify(withStats)
-                    });
-                    const retryResult = await retryResp.json().catch(() => ({}));
-                    console.log('📡 重试响应:', retryResult);
-                    if (!retryResp.ok) {
-                        showError(retryResult.message || '创建失败');
-                        return;
+  // 显示推荐结果模态框
+  showRecommendationModal(food, message, isNewRecommendation) {
+    const modal = document.createElement("div");
+    modal.className = "modal visible";
+    modal.innerHTML = `
+            <div class="modal-content recommendation-modal">
+                <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                <div class="recommendation-header">
+                    <h2>🎯 今日推荐</h2>
+                    ${
+                      isNewRecommendation
+                        ? '<span class="new-badge">新推荐</span>'
+                        : '<span class="today-badge">今日已推荐</span>'
                     }
-                    alert('美食添加成功！');
-                    if (retryResult.food && retryResult.food._id) {
-                        this.foods.push(retryResult.food);
-                    } else {
-                        await this.loadFoods();
-                    }
-                    this.closeAddFoodModal();
-                    this.render();
-                    this.bindEvents();
-                    return;
-                }
-
-                showError(result.message || '创建失败');
-                return;
-            }
-
-            alert('美食添加成功！');
-            if (result.food && result.food._id) {
-                this.foods.push(result.food);
-            } else {
-                await this.loadFoods();
-            }
-            this.closeAddFoodModal();
-            this.render();
-            this.bindEvents();
-        } catch (e) {
-            console.error('❌ 创建失败:', e);
-            showError('网络错误，请稍后再试');
-        }
-    }
-
-    
-
-    bindEvents() {
-        // 认证表单提交
-        const authForm = document.getElementById('authForm');
-        if (authForm) {
-            authForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleAuth(e);
-            });
-        }
-
-        // 搜索功能
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', () => {
-                this.handleSearch();
-            });
-        }
-
-        // 分类筛选
-        const categoryFilter = document.getElementById('categoryFilter');
-        if (categoryFilter) {
-            categoryFilter.addEventListener('change', (e) => {
-                this.handleFilter(e.target.value);
-            });
-        }
-
-        // 评论表单提交
-        const reviewForm = document.getElementById('reviewForm');
-        if (reviewForm) {
-            reviewForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.submitReview();
-            });
-        }
-
-        // 编辑评论表单提交
-        const editReviewForm = document.getElementById('editReviewForm');
-        if (editReviewForm) {
-            editReviewForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.updateReview();
-            });
-        }
-
-        // 新增评论星级评分点击事件
-        this.bindStarRating('starRating', (rating) => {
-            this.setRating(rating);
-        });
-
-        // 编辑评论星级评分点击事件
-        this.bindStarRating('editStarRating', (rating) => {
-            this.setEditRating(rating);
-        });
-
-        // 模态框外部点击关闭
-        const modal = document.getElementById('reviewModal');
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    this.closeReviewModal();
-                }
-            });
-        }
-
-        const editModal = document.getElementById('editReviewModal');
-        if (editModal) {
-            editModal.addEventListener('click', (e) => {
-                if (e.target === editModal) {
-                    this.closeEditReviewModal();
-                }
-            });
-        }
-
-        // 添加美食表单提交
-        const addFoodForm = document.getElementById('addFoodForm');
-        if (addFoodForm) {
-            addFoodForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.submitNewFood(addFoodForm);
-            });
-
-            // 类别选择联动 emoji（若用户没手动改）
-            const categorySelect = addFoodForm.querySelector('select[name="category"]');
-            const emojiInput = addFoodForm.querySelector('input[name="emoji"]');
-            if (categorySelect && emojiInput) {
-                categorySelect.addEventListener('change', () => {
-                    if (!emojiInput.value || Object.values(this.categoryEmojiMap).includes(emojiInput.value)) {
-                        emojiInput.value = this.categoryEmojiMap[categorySelect.value] || '🍽️';
-                    }
-                });
-            }
-        }
-    }
-
-    // 绑定星级评分事件的通用方法
-    bindStarRating(starRatingId, callback) {
-        const starRating = document.getElementById(starRatingId);
-        if (!starRating) return;
-
-        const stars = starRating.querySelectorAll('.star');
-        
-        stars.forEach(star => {
-            // 点击事件
-            star.addEventListener('click', (e) => {
-                const rating = parseInt(e.target.dataset.rating);
-                callback(rating);
-            });
-            
-            // 悬停预览
-            star.addEventListener('mouseover', (e) => {
-                const rating = parseInt(e.target.dataset.rating);
-                this.previewRating(starRatingId, rating);
-            });
-        });
-
-        // 鼠标离开重置预览
-        starRating.addEventListener('mouseleave', () => {
-            const currentRating = starRatingId === 'starRating' ? this.currentRating : this.editRating;
-            this.previewRating(starRatingId, currentRating);
-        });
-    }
-
-    // 认证相关方法
-    async handleAuth(e) {
-        const formData = new FormData(e.target);
-        const isLogin = this.authMode === 'login';
-        
-        const userData = {
-            email: formData.get('email'),
-            password: formData.get('password')
-        };
-
-        if (!isLogin) {
-            userData.username = formData.get('username');
-        }
-
-        console.log('📤 发送认证请求:', { ...userData, password: '[隐藏]' });
-
-        try {
-            const response = await fetch(`${this.apiUrl}/auth/${isLogin ? 'login' : 'register'}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify(userData)
-            });
-
-            const result = await response.json();
-            console.log('📡 服务器响应:', result);
-
-            if (response.ok) {
-                this.currentUser = result.user;
-                this.currentView = 'main';
-                alert(result.message);
-                await this.loadFoods();
-                this.render();
-                this.bindEvents();
-            } else {
-                alert(result.message);
-            }
-        } catch (error) {
-            console.error('❌ 认证请求失败:', error);
-            alert('网络连接失败，请重试');
-        }
-    }
-
-    toggleAuthMode() {
-        this.authMode = this.authMode === 'login' ? 'register' : 'login';
-        this.render();
-        this.bindEvents();
-    }
-
-    showAuth() {
-        this.currentView = 'auth';
-        this.render();
-        this.bindEvents();
-    }
-
-    showMainView() {
-        this.currentView = 'main';
-        this.render();
-        this.bindEvents();
-    }
-
-    async logout() {
-        try {
-            await fetch(`${this.apiUrl}/auth/logout`, {
-                method: 'POST',
-                credentials: 'include'
-            });
-            
-            this.currentUser = null;
-            this.currentView = 'auth';
-            this.render();
-            this.bindEvents();
-            alert('已安全退出登录');
-        } catch (error) {
-            console.error('❌ 退出登录失败:', error);
-        }
-    }
-
-    // 搜索和筛选
-    handleSearch() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const foodCards = document.querySelectorAll('.food-card');
-        
-        foodCards.forEach(card => {
-            const foodName = card.querySelector('.food-name').textContent.toLowerCase();
-            const foodCategory = card.dataset.category.toLowerCase();
-            const foodLocation = card.querySelector('.food-meta span').textContent.toLowerCase();
-            
-            if (foodName.includes(searchTerm) || 
-                foodCategory.includes(searchTerm) || 
-                foodLocation.includes(searchTerm)) {
-                // 恢复默认（CSS 中是 display:flex），避免被 block 破坏居中
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
-
-    handleFilter(category) {
-        const foodCards = document.querySelectorAll('.food-card');
-        
-        foodCards.forEach(card => {
-            if (category === 'all' || card.dataset.category === category) {
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
-
-    // 评论系统方法
-    async openReviewModal(foodId, foodName) {
-        this.currentFoodId = foodId;
-        document.getElementById('modalTitle').textContent = `${foodName} - 评价`;
-        
-        // 检查用户是否登录
-        if (!this.currentUser) {
-            alert('请先登录后再查看评价');
-            this.showAuth();
-            return;
-        }
-
-        // 显示模态框
-        document.getElementById('reviewModal').style.display = 'block';
-        
-        // 重置评论表单
-        this.resetReviewForm();
-        
-        // 加载评论
-        await this.loadReviews(foodId);
-    }
-
-    closeReviewModal() {
-        document.getElementById('reviewModal').style.display = 'none';
-        this.currentFoodId = null;
-        this.currentRating = 0;
-        this.reviewsPage = 1;
-    }
-
-    resetReviewForm() {
-        document.getElementById('reviewContent').value = '';
-        this.setRating(0);
-    }
-
-    setRating(rating) {
-        this.currentRating = rating;
-        this.previewRating('starRating', rating);
-        this.updateRatingFeedback('ratingFeedback', rating);
-    }
-
-    setEditRating(rating) {
-        this.editRating = rating;
-        this.previewRating('editStarRating', rating);
-        this.updateRatingFeedback('editRatingFeedback', rating);
-    }
-
-    previewRating(starRatingId, rating) {
-        const stars = document.querySelectorAll(`#${starRatingId} .star`);
-        stars.forEach((star, index) => {
-            star.classList.remove('active', 'preview');
-            if (index < rating) {
-                star.classList.add('active');
-            }
-        });
-    }
-
-    updateRatingFeedback(feedbackId, rating) {
-        const feedback = document.getElementById(feedbackId);
-        if (!feedback) return;
-
-        const ratingTexts = {
-            0: '请选择评分',
-            1: '⭐ 非常不满意',
-            2: '⭐⭐ 不太满意',
-            3: '⭐⭐⭐ 一般般',
-            4: '⭐⭐⭐⭐ 比较满意',
-            5: '⭐⭐⭐⭐⭐ 非常满意'
-        };
-
-        const ratingClasses = {
-            0: '',
-            1: 'terrible',
-            2: 'poor',
-            3: 'average',
-            4: 'good',
-            5: 'excellent'
-        };
-
-        feedback.textContent = ratingTexts[rating];
-        feedback.className = 'rating-feedback ' + (ratingClasses[rating] || '');
-        
-        if (rating > 0) {
-            feedback.classList.add('selected');
-        }
-    }
-
-    async submitReview() {
-        if (!this.currentUser) {
-            alert('请先登录');
-            return;
-        }
-
-        if (!this.currentFoodId) {
-            alert('系统错误，请重新打开评论窗口');
-            return;
-        }
-
-        const content = document.getElementById('reviewContent').value.trim();
-        const rating = this.currentRating;
-
-        if (!content) {
-            alert('请填写评论内容');
-            return;
-        }
-
-        if (rating === 0) {
-            alert('请选择评分');
-            return;
-        }
-
-        try {
-            console.log('📤 提交评论:', { foodId: this.currentFoodId, content, rating });
-            
-            const response = await fetch(`${this.apiUrl}/foods/${this.currentFoodId}/reviews`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({ content, rating })
-            });
-
-            const result = await response.json();
-            console.log('📡 评论提交响应:', result);
-
-            if (response.ok) {
-                alert(result.message);
-                this.resetReviewForm();
-                await this.loadReviews(this.currentFoodId);
-                await this.loadFoods(); // 重新加载美食数据以更新评分
-                this.render();
-                this.bindEvents();
-                // 重新打开模态框
-                setTimeout(() => {
-                    this.openReviewModal(this.currentFoodId, '当前美食');
-                }, 100);
-            } else {
-                alert(result.message);
-            }
-        } catch (error) {
-            console.error('❌ 提交评论失败:', error);
-            alert('提交评论失败，请检查网络连接');
-        }
-    }
-
-    async loadReviews(foodId, page = 1) {
-        try {
-            console.log('📥 加载评论:', foodId, 'page:', page);
-            
-            const response = await fetch(`${this.apiUrl}/foods/${foodId}/reviews?page=${page}&limit=5&sort=createdAt&order=desc`, {
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log('✅ 评论加载成功:', result);
+                </div>
                 
-                this.currentReviews = result.reviews;
-                this.reviewsPage = result.pagination.currentPage;
-                this.reviewsTotal = result.pagination.totalReviews;
-                
-                this.renderReviews();
-                this.renderReviewsPagination(result.pagination);
-            } else {
-                console.error('❌ 加载评论失败');
-                document.getElementById('reviewsList').innerHTML = '<div class="error">加载评论失败</div>';
-            }
-        } catch (error) {
-            console.error('❌ 加载评论错误:', error);
-            document.getElementById('reviewsList').innerHTML = '<div class="error">网络连接失败</div>';
-        }
-    }
-
-    renderReviews() {
-        const reviewsCount = document.getElementById('reviewsCount');
-        const reviewsList = document.getElementById('reviewsList');
-
-        reviewsCount.textContent = `共 ${this.reviewsTotal} 条评价`;
-
-        if (this.currentReviews.length === 0) {
-            reviewsList.innerHTML = '<div class="no-reviews">暂无评价，快来发表第一条评价吧！</div>';
-            return;
-        }
-
-        reviewsList.innerHTML = this.currentReviews.map(review => this.renderReviewItem(review)).join('');
-    }
-
-    renderReviewItem(review) {
-        const isOwnReview = this.currentUser && review.userId._id === this.currentUser.id;
-        const isAdmin = this.currentUser && this.currentUser.role === 'admin';
-        const isLiked = review.likes && review.likes.includes(this.currentUser?.id);
-
-        const createdAt = new Date(review.createdAt).toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-
-        return `
-            <div class="review-item">
-                <div class="review-header">
-                    <div class="review-author">
-                        <div class="review-author-avatar">${review.userId.avatar || '👤'}</div>
-                        <div>
-                            <div style="font-weight: bold;">${review.userId.username}</div>
-                            <div class="review-meta">${createdAt}</div>
+                <div class="recommendation-content">
+                    <div class="recommended-food">
+                        <div class="food-icon">${food.emoji}</div>
+                        <div class="food-info">
+                            <h3>${food.name}</h3>
+                            <p class="food-category">${
+                              this.categoryEmojiMap[food.category]
+                            } ${food.category}</p>
+                            <p class="food-location">📍 ${food.location}</p>
+                            <p class="food-description">${food.description}</p>
                         </div>
                     </div>
-                    <div class="review-rating">${'⭐'.repeat(review.rating)}</div>
+                    
+                    <div class="recommendation-message">
+                        <p>${message}</p>
+                    </div>
+                    
+                    <div class="recommendation-rating">
+                        <span class="rating-stars">${this.renderStars(
+                          food.averageRating
+                        )}</span>
+                        <span class="rating-text">${food.averageRating.toFixed(
+                          1
+                        )} (${food.reviewsCount} 评价)</span>
+                    </div>
                 </div>
-                <div class="review-content">${review.content}</div>
-                <div class="review-actions">
-                    <button class="like-btn ${isLiked ? 'liked' : ''}" onclick="app.toggleReviewLike('${review._id}')">
-                        ${isLiked ? '❤️' : '🤍'} ${review.likesCount || 0}
-                    </button>
-                    ${isOwnReview ? `<button class="edit-btn" onclick="app.openEditReviewModal('${review._id}')">✏️ 编辑</button>` : ''}
-                    ${(isOwnReview || isAdmin) ? `<button class="delete-review-btn" onclick="app.deleteReview('${review._id}')">🗑️ 删除</button>` : ''}
+                
+                <div class="recommendation-actions">
+                    <button class="btn-secondary" onclick="app.showRecommendationHistory()">查看历史推荐</button>
+                    <button class="btn-primary" onclick="app.openReviewModal('${
+                      food._id
+                    }', '${
+      food.name
+    }'); this.parentElement.parentElement.parentElement.remove();">查看详情</button>
                 </div>
             </div>
         `;
+
+    document.body.appendChild(modal);
+
+    // 点击外部关闭
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  // 显示推荐历史
+  async showRecommendationHistory() {
+    try {
+      console.log("📚 获取推荐历史...");
+
+      const response = await fetch(
+        `${this.apiUrl}/daily-recommendation/history?limit=30`,
+        {
+          credentials: "include",
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        this.showHistoryModal(result.recommendations);
+      } else {
+        alert(result.message || "获取推荐历史失败");
+      }
+    } catch (error) {
+      console.error("❌ 获取推荐历史失败:", error);
+      alert("网络错误，请稍后重试");
+    }
+  }
+
+  // 显示历史推荐模态框
+  showHistoryModal(recommendations) {
+    const modal = document.createElement("div");
+    modal.className = "modal visible";
+    modal.innerHTML = `
+            <div class="modal-content history-modal">
+                <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                <h2>📚 推荐历史</h2>
+                
+                <div class="history-content">
+                    ${
+                      recommendations.length === 0
+                        ? '<p class="no-history">暂无推荐历史</p>'
+                        : recommendations
+                            .map(
+                              (rec) => `
+                            <div class="history-item">
+                                <div class="history-date">${rec.date}</div>
+                                <div class="history-food">
+                                    <span class="food-emoji">${rec.food.emoji}</span>
+                                    <span class="food-name">${rec.food.name}</span>
+                                    <span class="food-category">${rec.food.category}</span>
+                                </div>
+                                <button class="btn-small" onclick="app.openReviewModal('${rec.food._id}', '${rec.food.name}'); this.parentElement.parentElement.parentElement.parentElement.remove();">查看</button>
+                            </div>
+                        `
+                            )
+                            .join("")
+                    }
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove()">关闭</button>
+                </div>
+            </div>
+        `;
+
+    document.body.appendChild(modal);
+
+    // 点击外部关闭
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  // 搜索和筛选
+  handleSearch() {
+    const searchTerm = document
+      .getElementById("searchInput")
+      .value.toLowerCase();
+    const foodCards = document.querySelectorAll(".food-card");
+
+    foodCards.forEach((card) => {
+      const foodName = card
+        .querySelector(".food-name")
+        .textContent.toLowerCase();
+      const foodCategory = card.dataset.category.toLowerCase();
+      const foodLocation = card
+        .querySelector(".food-meta span")
+        .textContent.toLowerCase();
+
+      if (
+        foodName.includes(searchTerm) ||
+        foodCategory.includes(searchTerm) ||
+        foodLocation.includes(searchTerm)
+      ) {
+        // 恢复默认（CSS 中是 display:flex），避免被 block 破坏居中
+        card.style.display = "";
+      } else {
+        card.style.display = "none";
+      }
+    });
+  }
+
+  handleFilter(category) {
+    const foodCards = document.querySelectorAll(".food-card");
+
+    foodCards.forEach((card) => {
+      if (category === "all" || card.dataset.category === category) {
+        card.style.display = "";
+      } else {
+        card.style.display = "none";
+      }
+    });
+  }
+
+  // 评论系统方法
+  async openReviewModal(foodId, foodName) {
+    this.currentFoodId = foodId;
+    document.getElementById("modalTitle").textContent = `${foodName} - 评价`;
+
+    // 检查用户是否登录
+    if (!this.currentUser) {
+      alert("请先登录后再查看评价");
+      this.showAuth();
+      return;
     }
 
-    renderReviewsPagination(pagination) {
-        const paginationContainer = document.getElementById('reviewsPagination');
-        
-        if (pagination.totalPages <= 1) {
-            paginationContainer.innerHTML = '';
-            return;
-        }
+    // 显示模态框
+    document.getElementById("reviewModal").style.display = "block";
 
-        let html = '';
-        
-        // 上一页按钮
-        html += `
-            <button ${pagination.currentPage === 1 ? 'disabled' : ''} 
-                    onclick="app.loadReviews('${this.currentFoodId}', ${pagination.currentPage - 1})">
+    // 重置评论表单
+    this.resetReviewForm();
+
+    // 加载评论
+    await this.loadReviews(foodId);
+  }
+
+  closeReviewModal() {
+    document.getElementById("reviewModal").style.display = "none";
+    this.currentFoodId = null;
+    this.currentRating = 0;
+    this.reviewsPage = 1;
+  }
+
+  resetReviewForm() {
+    document.getElementById("reviewContent").value = "";
+    this.setRating(0);
+  }
+
+  setRating(rating) {
+    this.currentRating = rating;
+    this.previewRating("starRating", rating);
+    this.updateRatingFeedback("ratingFeedback", rating);
+  }
+
+  setEditRating(rating) {
+    this.editRating = rating;
+    this.previewRating("editStarRating", rating);
+    this.updateRatingFeedback("editRatingFeedback", rating);
+  }
+
+  previewRating(starRatingId, rating) {
+    const stars = document.querySelectorAll(`#${starRatingId} .star`);
+    stars.forEach((star, index) => {
+      star.classList.remove("active", "preview");
+      if (index < rating) {
+        star.classList.add("active");
+      }
+    });
+  }
+
+  updateRatingFeedback(feedbackId, rating) {
+    const feedback = document.getElementById(feedbackId);
+    if (!feedback) return;
+
+    const ratingTexts = {
+      0: "请选择评分",
+      1: "⭐ 非常不满意",
+      2: "⭐⭐ 不太满意",
+      3: "⭐⭐⭐ 一般般",
+      4: "⭐⭐⭐⭐ 比较满意",
+      5: "⭐⭐⭐⭐⭐ 非常满意",
+    };
+
+    const ratingClasses = {
+      0: "",
+      1: "terrible",
+      2: "poor",
+      3: "average",
+      4: "good",
+      5: "excellent",
+    };
+
+    feedback.textContent = ratingTexts[rating];
+    feedback.className = "rating-feedback " + (ratingClasses[rating] || "");
+
+    if (rating > 0) {
+      feedback.classList.add("selected");
+    }
+  }
+
+  async submitReview() {
+    if (!this.currentUser) {
+      alert("请先登录");
+      return;
+    }
+
+    if (!this.currentFoodId) {
+      alert("系统错误，请重新打开评论窗口");
+      return;
+    }
+
+    const content = document.getElementById("reviewContent").value.trim();
+    const rating = this.currentRating;
+
+    if (!content) {
+      alert("请填写评论内容");
+      return;
+    }
+
+    if (rating === 0) {
+      alert("请选择评分");
+      return;
+    }
+
+    try {
+      console.log("📤 提交评论:", {
+        foodId: this.currentFoodId,
+        content,
+        rating,
+      });
+
+      const response = await fetch(
+        `${this.apiUrl}/foods/${this.currentFoodId}/reviews`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ content, rating }),
+        }
+      );
+
+      const result = await response.json();
+      console.log("📡 评论提交响应:", result);
+
+      if (response.ok) {
+        alert(result.message);
+        this.resetReviewForm();
+        await this.loadReviews(this.currentFoodId);
+        await this.loadFoods(); // 重新加载美食数据以更新评分
+        this.render();
+        this.bindEvents();
+        // 重新打开模态框
+        setTimeout(() => {
+          this.openReviewModal(this.currentFoodId, "当前美食");
+        }, 100);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("❌ 提交评论失败:", error);
+      alert("提交评论失败，请检查网络连接");
+    }
+  }
+
+  async loadReviews(foodId, page = 1) {
+    try {
+      console.log("📥 加载评论:", foodId, "page:", page);
+
+      const response = await fetch(
+        `${this.apiUrl}/foods/${foodId}/reviews?page=${page}&limit=5&sort=createdAt&order=desc`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("✅ 评论加载成功:", result);
+
+        this.currentReviews = result.reviews;
+        this.reviewsPage = result.pagination.currentPage;
+        this.reviewsTotal = result.pagination.totalReviews;
+
+        this.renderReviews();
+        this.renderReviewsPagination(result.pagination);
+      } else {
+        console.error("❌ 加载评论失败");
+        document.getElementById("reviewsList").innerHTML =
+          '<div class="error">加载评论失败</div>';
+      }
+    } catch (error) {
+      console.error("❌ 加载评论错误:", error);
+      document.getElementById("reviewsList").innerHTML =
+        '<div class="error">网络连接失败</div>';
+    }
+  }
+
+  renderReviews() {
+    const reviewsCount = document.getElementById("reviewsCount");
+    const reviewsList = document.getElementById("reviewsList");
+
+    reviewsCount.textContent = `共 ${this.reviewsTotal} 条评价`;
+
+    if (this.currentReviews.length === 0) {
+      reviewsList.innerHTML =
+        '<div class="no-reviews">暂无评价，快来发表第一条评价吧！</div>';
+      return;
+    }
+
+    reviewsList.innerHTML = this.currentReviews
+      .map((review) => this.renderReviewItem(review))
+      .join("");
+  }
+
+  renderReviewItem(review) {
+    const isOwnReview =
+      this.currentUser && review.userId._id === this.currentUser.id;
+    const isAdmin = this.currentUser && this.currentUser.role === "admin";
+    const isLiked = review.likes && review.likes.includes(this.currentUser?.id);
+
+    const createdAt = new Date(review.createdAt).toLocaleDateString("zh-CN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    return `
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-author">
+                        <div class="review-author-avatar">${
+                          review.userId.avatar || "👤"
+                        }</div>
+                        <div>
+                            <div style="font-weight: bold;">${
+                              review.userId.username
+                            }</div>
+                            <div class="review-meta">${createdAt}</div>
+                        </div>
+                    </div>
+                    <div class="review-rating">${"⭐".repeat(
+                      review.rating
+                    )}</div>
+                </div>
+                <div class="review-content">${review.content}</div>
+                <div class="review-actions">
+                    <button class="like-btn ${
+                      isLiked ? "liked" : ""
+                    }" onclick="app.toggleReviewLike('${review._id}')">
+                        ${isLiked ? "❤️" : "🤍"} ${review.likesCount || 0}
+                    </button>
+                    ${
+                      isOwnReview
+                        ? `<button class="edit-btn" onclick="app.openEditReviewModal('${review._id}')">✏️ 编辑</button>`
+                        : ""
+                    }
+                    ${
+                      isOwnReview || isAdmin
+                        ? `<button class="delete-review-btn" onclick="app.deleteReview('${review._id}')">🗑️ 删除</button>`
+                        : ""
+                    }
+                </div>
+            </div>
+        `;
+  }
+
+  renderReviewsPagination(pagination) {
+    const paginationContainer = document.getElementById("reviewsPagination");
+
+    if (pagination.totalPages <= 1) {
+      paginationContainer.innerHTML = "";
+      return;
+    }
+
+    let html = "";
+
+    // 上一页按钮
+    html += `
+            <button ${pagination.currentPage === 1 ? "disabled" : ""} 
+                    onclick="app.loadReviews('${this.currentFoodId}', ${
+      pagination.currentPage - 1
+    })">
                 上一页
             </button>
         `;
 
-        // 页码按钮
-        for (let i = 1; i <= pagination.totalPages; i++) {
-            html += `
-                <button class="${i === pagination.currentPage ? 'active' : ''}"
-                        onclick="app.loadReviews('${this.currentFoodId}', ${i})">
+    // 页码按钮
+    for (let i = 1; i <= pagination.totalPages; i++) {
+      html += `
+                <button class="${i === pagination.currentPage ? "active" : ""}"
+                        onclick="app.loadReviews('${
+                          this.currentFoodId
+                        }', ${i})">
                     ${i}
                 </button>
             `;
-        }
+    }
 
-        // 下一页按钮
-        html += `
-            <button ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''} 
-                    onclick="app.loadReviews('${this.currentFoodId}', ${pagination.currentPage + 1})">
+    // 下一页按钮
+    html += `
+            <button ${
+              pagination.currentPage === pagination.totalPages ? "disabled" : ""
+            } 
+                    onclick="app.loadReviews('${this.currentFoodId}', ${
+      pagination.currentPage + 1
+    })">
                 下一页
             </button>
         `;
 
-        paginationContainer.innerHTML = html;
+    paginationContainer.innerHTML = html;
+  }
+
+  // 编辑评论功能
+  async openEditReviewModal(reviewId) {
+    this.editingReviewId = reviewId;
+
+    // 找到要编辑的评论
+    const review = this.currentReviews.find((r) => r._id === reviewId);
+    if (!review) {
+      alert("找不到要编辑的评论");
+      return;
     }
 
-    // 编辑评论功能
-    async openEditReviewModal(reviewId) {
-        this.editingReviewId = reviewId;
-        
-        // 找到要编辑的评论
-        const review = this.currentReviews.find(r => r._id === reviewId);
-        if (!review) {
-            alert('找不到要编辑的评论');
-            return;
-        }
+    // 显示编辑模态框
+    document.getElementById("editReviewModal").style.display = "block";
 
-        // 显示编辑模态框
-        document.getElementById('editReviewModal').style.display = 'block';
-        
-        // 填入原有内容
-        document.getElementById('editReviewContent').value = review.content;
-        this.setEditRating(review.rating);
+    // 填入原有内容
+    document.getElementById("editReviewContent").value = review.content;
+    this.setEditRating(review.rating);
 
-        // 重新绑定编辑表单的事件
-        this.bindStarRating('editStarRating', (rating) => {
-            this.setEditRating(rating);
-        });
+    // 重新绑定编辑表单的事件
+    this.bindStarRating("editStarRating", (rating) => {
+      this.setEditRating(rating);
+    });
+  }
+
+  closeEditReviewModal() {
+    document.getElementById("editReviewModal").style.display = "none";
+    this.editingReviewId = null;
+    this.editRating = 0;
+    document.getElementById("editReviewContent").value = "";
+  }
+
+  async updateReview() {
+    if (!this.editingReviewId) {
+      alert("系统错误，请重新打开编辑窗口");
+      return;
     }
 
-    closeEditReviewModal() {
-        document.getElementById('editReviewModal').style.display = 'none';
-        this.editingReviewId = null;
-        this.editRating = 0;
-        document.getElementById('editReviewContent').value = '';
+    const content = document.getElementById("editReviewContent").value.trim();
+    const rating = this.editRating;
+
+    if (!content) {
+      alert("请填写评论内容");
+      content = "请填写评论内容";
+      return;
     }
 
-    async updateReview() {
-        if (!this.editingReviewId) {
-            alert('系统错误，请重新打开编辑窗口');
-            return;
-        }
-
-        const content = document.getElementById('editReviewContent').value.trim();
-        const rating = this.editRating;
-
-        if (!content) {
-            alert('请填写评论内容');
-            content = '请填写评论内容';
-            return;
-        }
-
-        if (rating === 0) {
-            alert('请选择评分');
-            rating = 5;
-            return;
-        }
-
-        try {
-            console.log('📤 更新评论:', { reviewId: this.editingReviewId, content, rating });
-            
-            const response = await fetch(`${this.apiUrl}/reviews/${this.editingReviewId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({ content, rating })
-            });
-
-            const result = await response.json();
-            console.log('📡 评论更新响应:', result);
-
-            if (response.ok) {
-                alert(result.message);
-                this.closeEditReviewModal();
-                await this.loadReviews(this.currentFoodId, this.reviewsPage);
-                await this.loadFoods(); // 重新加载美食数据以更新评分
-                this.render();
-                this.bindEvents();
-                // 重新打开评论模态框
-                setTimeout(() => {
-                    this.openReviewModal(this.currentFoodId, '当前美食');
-                }, 100);
-            } else {
-                alert(result.message);
-            }
-        } catch (error) {
-            console.error('❌ 更新评论失败:', error);
-            alert('更新评论失败，请检查网络连接');
-        }
+    if (rating === 0) {
+      alert("请选择评分");
+      rating = 5;
+      return;
     }
 
-    async toggleReviewLike(reviewId) {
-        if (!this.currentUser) {
-            alert('请先登录');
-            return;
+    try {
+      console.log("📤 更新评论:", {
+        reviewId: this.editingReviewId,
+        content,
+        rating,
+      });
+
+      const response = await fetch(
+        `${this.apiUrl}/reviews/${this.editingReviewId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ content, rating }),
         }
+      );
 
-        try {
-            const response = await fetch(`${this.apiUrl}/reviews/${reviewId}/like`, {
-                method: 'POST',
-                credentials: 'include'
-            });
+      const result = await response.json();
+      console.log("📡 评论更新响应:", result);
 
-            const result = await response.json();
+      if (response.ok) {
+        alert(result.message);
+        this.closeEditReviewModal();
+        await this.loadReviews(this.currentFoodId, this.reviewsPage);
+        await this.loadFoods(); // 重新加载美食数据以更新评分
+        this.render();
+        this.bindEvents();
+        // 重新打开评论模态框
+        setTimeout(() => {
+          this.openReviewModal(this.currentFoodId, "当前美食");
+        }, 100);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("❌ 更新评论失败:", error);
+      alert("更新评论失败，请检查网络连接");
+    }
+  }
 
-            if (response.ok) {
-                await this.loadReviews(this.currentFoodId, this.reviewsPage);
-            } else {
-                alert(result.message);
-            }
-        } catch (error) {
-            console.error('❌ 点赞失败:', error);
-            alert('操作失败，请重试');
-        }
+  async toggleReviewLike(reviewId) {
+    if (!this.currentUser) {
+      alert("请先登录");
+      return;
     }
 
-    async deleteReview(reviewId) {
-        if (!confirm('确定要删除这条评论吗？')) {
-            return;
-        }
+    try {
+      const response = await fetch(`${this.apiUrl}/reviews/${reviewId}/like`, {
+        method: "POST",
+        credentials: "include",
+      });
 
-        try {
-            const response = await fetch(`${this.apiUrl}/reviews/${reviewId}`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
+      const result = await response.json();
 
-            const result = await response.json();
+      if (response.ok) {
+        await this.loadReviews(this.currentFoodId, this.reviewsPage);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("❌ 点赞失败:", error);
+      alert("操作失败，请重试");
+    }
+  }
 
-            if (response.ok) {
-                alert(result.message);
-                await this.loadReviews(this.currentFoodId, this.reviewsPage);
-                await this.loadFoods(); 
-                this.render();
-                this.bindEvents();
-                setTimeout(() => {
-                    this.openReviewModal(this.currentFoodId, '当前美食');
-                }, 100);
-            } else {
-                alert(result.message);
-            }
-        } catch (error) {
-            console.error('❌ 删除评论失败:', error);
-            alert('删除失败，请重试');
-        }
+  async deleteReview(reviewId) {
+    if (!confirm("确定要删除这条评论吗？")) {
+      return;
     }
 
-    async showAddFoodForm() {
-        if (!this.currentUser) {
-            alert('请先登录');
-            this.showAuth();
-            return;
-        }
+    try {
+      const response = await fetch(`${this.apiUrl}/reviews/${reviewId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-        const name = prompt('请输入美食名称:');
-        if (!name || !name.trim()) return;
+      const result = await response.json();
 
-        const category = prompt('请输入美食类别 (面食/快餐/饮品/小吃/早餐/其他):');
-        if (!category || !category.trim()) return;
-        
-        const validCategories = ['面食', '快餐', '饮品', '小吃', '早餐', '其他'];
-        const normalizedCategory = category.trim();
-        if (!validCategories.includes(normalizedCategory)) {
-            alert('请输入有效的美食类别: ' + validCategories.join('、'));
-            return;
-        }
+      if (response.ok) {
+        alert(result.message);
+        await this.loadReviews(this.currentFoodId, this.reviewsPage);
+        await this.loadFoods();
+        this.render();
+        this.bindEvents();
+        setTimeout(() => {
+          this.openReviewModal(this.currentFoodId, "当前美食");
+        }, 100);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("❌ 删除评论失败:", error);
+      alert("删除失败，请重试");
+    }
+  }
 
-        const location = prompt('请输入位置:');
-        if (!location || !location.trim()) return;
-
-        const description = prompt('请输入描述:');
-        if (!description || !description.trim()) return;
-
-        const categoryEmojiMap = {
-            '面食': '🍜',
-            '快餐': '🍔',
-            '饮品': '🧋',
-            '小吃': '🍗',
-            '早餐': '🥞',
-            '其他': '🍽️'
-        };
-
-        const basePayload = {
-            name: name.trim(),
-            category: normalizedCategory,
-            location: location.trim(),
-            description: description.trim(),
-            emoji: categoryEmojiMap[normalizedCategory] || '🍽️',
-            createdByName: this.currentUser?.username || this.currentUser?.email || undefined
-        };
-
-        const statDefaults = {
-            averageRating: 0,
-            reviewsCount: 0,
-            totalRating: 0,
-            ratingDistribution: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
-            reviews: []
-        };
-
-        const tryCreate = async (payload, phase) => {
-            console.log(`📤 创建美食(${phase}):`, payload);
-            const response = await fetch(`${this.apiUrl}/foods`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json().catch(() => ({}));
-            console.log(`📡 创建响应(${phase}):`, result);
-            return { response, result };
-        };
-
-        try {
-            let { response, result } = await tryCreate(basePayload, '最小字段');
-
-            if (!response.ok && result?.message && result.message.includes('缺少必要字段')) {
-                const extendedPayload = { ...basePayload, ...statDefaults };
-                ({ response, result } = await tryCreate(extendedPayload, '含默认统计字段重试'));
-            }
-
-            if (!response.ok) {
-                alert(`添加失败: ${result.message || '服务器返回错误'}`);
-                return;
-            }
-
-            alert('美食添加成功！');
-
-            if (result.food && result.food._id) {
-                this.foods.push(result.food);
-            } else {
-                await this.loadFoods();
-            }
-
-            this.render();
-            this.bindEvents();
-        } catch (e) {
-            console.error('❌ 创建失败:', e);
-            alert('网络错误，稍后再试');
-        }
+  async showAddFoodForm() {
+    if (!this.currentUser) {
+      alert("请先登录");
+      this.showAuth();
+      return;
     }
 
-    // 找到 showEditFoodForm 方法并完全替换为以下代码：
-    async deleteFood(foodId) {
-        const food = this.foods.find(f => f._id === foodId);
-        const ownerId = food?.createdBy?._id || food?.createdBy || food?.recommendedBy;
-        if (!(this.currentUser && (this.currentUser.role === 'admin' || (ownerId && String(ownerId) === String(this.currentUser.id))))) {
-            alert('无权限删除该美食');
-            return;
-        }
-        if (!confirm('确定要删除这个美食吗？此操作不可恢复！')) return;
+    const name = prompt("请输入美食名称:");
+    if (!name || !name.trim()) return;
 
-        try {
-            const response = await fetch(`${this.apiUrl}/foods/${foodId}`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
+    const category = prompt("请输入美食类别 (面食/快餐/饮品/小吃/早餐/其他):");
+    if (!category || !category.trim()) return;
 
-            const result = await response.json();
-
-            if (response.ok) {
-                alert(result.message);
-                await this.loadFoods();
-                this.render();
-                this.bindEvents();
-            } else {
-                alert(result.message);
-            }
-        } catch (error) {
-            console.error('❌ 删除美食失败:', error);
-            alert('删除失败，请检查网络连接');
-        }
+    const validCategories = ["面食", "快餐", "饮品", "小吃", "早餐", "其他"];
+    const normalizedCategory = category.trim();
+    if (!validCategories.includes(normalizedCategory)) {
+      alert("请输入有效的美食类别: " + validCategories.join("、"));
+      return;
     }
 
-    // 渲染美食网格
-    renderFoodsGrid() {
-        if (!Array.isArray(this.foods) || this.foods.length === 0) {
-            return `
+    const location = prompt("请输入位置:");
+    if (!location || !location.trim()) return;
+
+    const description = prompt("请输入描述:");
+    if (!description || !description.trim()) return;
+
+    const categoryEmojiMap = {
+      面食: "🍜",
+      快餐: "🍔",
+      饮品: "🧋",
+      小吃: "🍗",
+      早餐: "🥞",
+      其他: "🍽️",
+    };
+
+    const basePayload = {
+      name: name.trim(),
+      category: normalizedCategory,
+      location: location.trim(),
+      description: description.trim(),
+      emoji: categoryEmojiMap[normalizedCategory] || "🍽️",
+      createdByName:
+        this.currentUser?.username || this.currentUser?.email || undefined,
+    };
+
+    const statDefaults = {
+      averageRating: 0,
+      reviewsCount: 0,
+      totalRating: 0,
+      ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      reviews: [],
+    };
+
+    const tryCreate = async (payload, phase) => {
+      console.log(`📤 创建美食(${phase}):`, payload);
+      const response = await fetch(`${this.apiUrl}/foods`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      console.log(`📡 创建响应(${phase}):`, result);
+      return { response, result };
+    };
+
+    try {
+      let { response, result } = await tryCreate(basePayload, "最小字段");
+
+      if (
+        !response.ok &&
+        result?.message &&
+        result.message.includes("缺少必要字段")
+      ) {
+        const extendedPayload = { ...basePayload, ...statDefaults };
+        ({ response, result } = await tryCreate(
+          extendedPayload,
+          "含默认统计字段重试"
+        ));
+      }
+
+      if (!response.ok) {
+        alert(`添加失败: ${result.message || "服务器返回错误"}`);
+        return;
+      }
+
+      alert("美食添加成功！");
+
+      if (result.food && result.food._id) {
+        this.foods.push(result.food);
+      } else {
+        await this.loadFoods();
+      }
+
+      this.render();
+      this.bindEvents();
+    } catch (e) {
+      console.error("❌ 创建失败:", e);
+      alert("网络错误，稍后再试");
+    }
+  }
+
+  // 找到 showEditFoodForm 方法并完全替换为以下代码：
+  async deleteFood(foodId) {
+    const food = this.foods.find((f) => f._id === foodId);
+    const ownerId =
+      food?.createdBy?._id || food?.createdBy || food?.recommendedBy;
+    if (
+      !(
+        this.currentUser &&
+        (this.currentUser.role === "admin" ||
+          (ownerId && String(ownerId) === String(this.currentUser.id)))
+      )
+    ) {
+      alert("无权限删除该美食");
+      return;
+    }
+    if (!confirm("确定要删除这个美食吗？此操作不可恢复！")) return;
+
+    try {
+      const response = await fetch(`${this.apiUrl}/foods/${foodId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(result.message);
+        await this.loadFoods();
+        this.render();
+        this.bindEvents();
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("❌ 删除美食失败:", error);
+      alert("删除失败，请检查网络连接");
+    }
+  }
+
+  // 渲染美食网格
+  renderFoodsGrid() {
+    if (!Array.isArray(this.foods) || this.foods.length === 0) {
+      return `
                 <div class="empty">
-                    <p>暂无美食数据，${this.currentUser ? '点击“+ 推荐美食”添加第一条吧！' : '请先登录或注册。'}</p>
+                    <p>暂无美食数据，${
+                      this.currentUser
+                        ? "点击“+ 推荐美食”添加第一条吧！"
+                        : "请先登录或注册。"
+                    }</p>
                 </div>
             `;
-        }
-
-        return `
-            <div class="foods-grid">
-                ${this.foods.map(f => this.renderFoodCard(f)).join('')}
-            </div>
-        `;
     }
 
-    // 单个美食卡片
-    renderFoodCard(food) {
-        const id = food._id || food.id;
-        const name = food.name || '未命名';
-        const category = food.category || '其他';
-        const location = food.location || '未知位置';
-        const desc = (food.description || '').slice(0, 60);
-        const avg = (food.averageRating ?? 0).toFixed
-            ? (food.averageRating || 0).toFixed(1)
-            : food.averageRating || 0;
-        const reviewsCount = food.reviewsCount ?? food.reviews?.length ?? 0;
-        const emoji = food.emoji || this.categoryEmojiMap[category] || '🍽️';
-    // 贡献者与权限（createdBy / createdByName 来自后端）
-    const contributorId = food.createdBy?._id || food.createdBy || food.recommendedBy; // 兼容旧字段
-    const contributorName = food.createdByName || food.createdBy?.username || food.createdBy?.email || '匿名';
-    const isOwner = this.currentUser && contributorId && String(contributorId) === String(this.currentUser.id);
-    const canEdit = isOwner; // 推荐者可编辑
-    const canDelete = this.currentUser && (this.currentUser.role === 'admin' || isOwner);
+    return `
+            <div class="foods-grid">
+                ${this.foods.map((f) => this.renderFoodCard(f)).join("")}
+            </div>
+        `;
+  }
 
-        return `
+  // 单个美食卡片
+  renderFoodCard(food) {
+    const id = food._id || food.id;
+    const name = food.name || "未命名";
+    const category = food.category || "其他";
+    const location = food.location || "未知位置";
+    const desc = (food.description || "").slice(0, 60);
+    const avg = (food.averageRating ?? 0).toFixed
+      ? (food.averageRating || 0).toFixed(1)
+      : food.averageRating || 0;
+    const reviewsCount = food.reviewsCount ?? food.reviews?.length ?? 0;
+    const emoji = food.emoji || this.categoryEmojiMap[category] || "🍽️";
+    // 贡献者与权限（createdBy / createdByName 来自后端）
+    const contributorId =
+      food.createdBy?._id || food.createdBy || food.recommendedBy; // 兼容旧字段
+    const contributorName =
+      food.createdByName ||
+      food.createdBy?.username ||
+      food.createdBy?.email ||
+      "匿名";
+    const isOwner =
+      this.currentUser &&
+      contributorId &&
+      String(contributorId) === String(this.currentUser.id);
+    const canEdit = isOwner; // 推荐者可编辑
+    const canDelete =
+      this.currentUser && (this.currentUser.role === "admin" || isOwner);
+
+    return `
             <div class="food-card" data-category="${category}">
                 <div class="food-emoji">${emoji}</div>
                 <h3 class="food-name">${name}</h3>
@@ -1162,92 +1464,112 @@ class App {
                 </div>
                 <p class="food-desc">${desc}</p>
                 <div class="food-actions">
-                    <button onclick="app.openReviewModal('${id}','${name.replace(/'/g, '')}')">
+                    <button onclick="app.openReviewModal('${id}','${name.replace(
+      /'/g,
+      ""
+    )}')">
                         查看 / 评价
                     </button>
-                    ${canEdit ? `<button onclick="app.openEditFoodModal('${id}')">编辑</button>` : ''}
-                    ${canDelete ? `<button class="danger" onclick="app.deleteFood('${id}')">删除</button>` : ''}
+                    ${
+                      canEdit
+                        ? `<button onclick="app.openEditFoodModal('${id}')">编辑</button>`
+                        : ""
+                    }
+                    ${
+                      canDelete
+                        ? `<button class="danger" onclick="app.deleteFood('${id}')">删除</button>`
+                        : ""
+                    }
                 </div>
             </div>
         `;
+  }
+
+  async openEditFoodModal(foodId) {
+    const food = this.foods.find((f) => f._id === foodId);
+    if (!food) {
+      alert("找不到要编辑的美食");
+      return;
+    }
+    const ownerId = food.createdBy?._id || food.createdBy || food.recommendedBy;
+    if (
+      !(
+        this.currentUser &&
+        (this.currentUser.role === "admin" ||
+          (ownerId && String(ownerId) === String(this.currentUser.id)))
+      )
+    ) {
+      alert("无权限编辑该美食");
+      return;
     }
 
-    async openEditFoodModal(foodId) {
-        const food = this.foods.find(f => f._id === foodId);
-        if (!food) {
-            alert('找不到要编辑的美食');
-            return;
-        }
-        const ownerId = food.createdBy?._id || food.createdBy || food.recommendedBy;
-        if (!(this.currentUser && (this.currentUser.role === 'admin' || (ownerId && String(ownerId) === String(this.currentUser.id))))) {
-            alert('无权限编辑该美食');
-            return;
-        }
+    const name = prompt("请输入新的美食名称:", food.name);
+    if (!name || !name.trim()) return;
 
-        const name = prompt('请输入新的美食名称:', food.name);
-        if (!name || !name.trim()) return;
+    const category = prompt(
+      "请输入新的美食类别 (面食/快餐/饮品/小吃/早餐/其他):",
+      food.category
+    );
+    if (!category || !category.trim()) return;
 
-        const category = prompt('请输入新的美食类别 (面食/快餐/饮品/小吃/早餐/其他):', food.category);
-        if (!category || !category.trim()) return;
-
-        const validCategories = ['面食', '快餐', '饮品', '小吃', '早餐', '其他'];
-        const normalizedCategory = category.trim();
-        if (!validCategories.includes(normalizedCategory)) {
-            alert('请输入有效的美食类别: ' + validCategories.join('、'));
-            return;
-        }
-
-        const location = prompt('请输入新的位置:', food.location);
-        if (!location || !location.trim()) return;
-
-        const description = prompt('请输入新的描述:', food.description);
-        if (!description || !description.trim()) return;
-
-        const payload = {
-            name: name.trim(),
-            category: normalizedCategory,
-            location: location.trim(),
-            description: description.trim()
-        };
-
-        try {
-            const response = await fetch(`${this.apiUrl}/foods/${foodId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                alert('美食信息更新成功！');
-                await this.loadFoods();
-                this.render();
-                this.bindEvents();
-            } else {
-                alert(result.message || '更新失败');
-            }
-        } catch (error) {
-            console.error('❌ 更新美食失败:', error);
-            alert('更新失败，请检查网络连接');
-        }
+    const validCategories = ["面食", "快餐", "饮品", "小吃", "早餐", "其他"];
+    const normalizedCategory = category.trim();
+    if (!validCategories.includes(normalizedCategory)) {
+      alert("请输入有效的美食类别: " + validCategories.join("、"));
+      return;
     }
+
+    const location = prompt("请输入新的位置:", food.location);
+    if (!location || !location.trim()) return;
+
+    const description = prompt("请输入新的描述:", food.description);
+    if (!description || !description.trim()) return;
+
+    const payload = {
+      name: name.trim(),
+      category: normalizedCategory,
+      location: location.trim(),
+      description: description.trim(),
+    };
+
+    try {
+      const response = await fetch(`${this.apiUrl}/foods/${foodId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert("美食信息更新成功！");
+        await this.loadFoods();
+        this.render();
+        this.bindEvents();
+      } else {
+        alert(result.message || "更新失败");
+      }
+    } catch (error) {
+      console.error("❌ 更新美食失败:", error);
+      alert("更新失败，请检查网络连接");
+    }
+  }
 }
 
 // 全局函数
 function closeReviewModal() {
-    app.closeReviewModal();
+  app.closeReviewModal();
 }
 
 function closeEditReviewModal() {
-    app.closeEditReviewModal();
+  app.closeEditReviewModal();
 }
 
 // 启动应用
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 DOM加载完成，启动应用...');
-    if (!window.app) {
-        window.app = new App();
-    }
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("📄 DOM加载完成，启动应用...");
+  if (!window.app) {
+    window.app = new App();
+  }
 });
