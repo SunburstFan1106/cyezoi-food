@@ -1124,6 +1124,256 @@ button:hover,
   /* 内容靠左 */
 }
 
+/* 主布局容器 - 支持右侧公告栏 */
+.main-layout {
+  display: flex;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.content-area {
+  flex: 1;
+  min-width: 0; /* 防止内容溢出 */
+}
+
+.announcements-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .announcements-sidebar {
+    width: 100%;
+    order: -1; /* 在移动端将公告栏移到顶部 */
+  }
+}
+
+/* 公告栏样式调整 */
+.announcements-sidebar .announcements-section {
+  background: var(--bg-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: sticky;
+  top: 2rem;
+  margin: 0; /* 重置边距 */
+}
+
+/* 侧边栏中的主标题调整 */
+.announcements-sidebar .ann-main-title {
+  font-size: 1.4rem;
+  margin: 1rem 0 1rem;
+}
+
+/* 侧边栏中的卡片调整 */
+.announcements-sidebar .ann-card {
+  padding: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.announcements-sidebar .ann-card:last-child {
+  margin-bottom: 0;
+}
+
+/* 底部公告栏样式 */
+.announcements-bottom {
+  margin-top: 3rem;
+  padding: 2rem 1rem;
+  background: var(--bg-soft);
+  border-top: 1px solid var(--border);
+}
+
+.announcements-bottom .announcements-section {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.announcements-bottom .ann-cards {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* 公告栏样式 - 重写版本 */
+.announcements-section {
+  max-width: 920px;
+  margin: 0 auto 2rem;
+}
+
+/* 主标题 - 最大最醒目 */
+.ann-main-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--text);
+  text-align: center;
+  margin: 1.5rem 0 1.8rem;
+  line-height: 1.2;
+}
+
+/* 公告卡片容器 */
+.ann-cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+/* 统一的公告卡片样式 */
+.ann-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.2rem;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.ann-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 18px -6px rgba(var(--accent-rgb)/0.35);
+  transform: translateY(-2px);
+}
+
+.ann-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.ann-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.ann-badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ann-badge-pinned {
+  background: var(--accent);
+  color: #fff;
+}
+
+.ann-card-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-sec);
+  margin-bottom: 0.8rem;
+}
+
+.ann-author {
+  font-weight: 600;
+}
+
+.ann-card-content {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.ann-empty {
+  text-align: center;
+  color: var(--text-sec);
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* 管理员公告管理样式 */
+.admin-announce-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white !important;
+}
+.admin-announce-btn:hover {
+  background: linear-gradient(135deg, #5a6fd8, #6a4190);
+}
+.admin-announce-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--border);
+}
+.tab-btn {
+  padding: .75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-sec);
+  transition: var(--transition);
+}
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-btn:hover {
+  color: var(--accent);
+}
+.tab-panel {
+  margin-top: 1rem;
+}
+.manage-ann-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: .75rem;
+  background: var(--bg-alt);
+}
+.manage-ann-info {
+  flex: 1;
+}
+.manage-ann-info h4 {
+  margin: 0 0 .5rem 0;
+  font-size: 1rem;
+}
+.manage-ann-info p {
+  margin: .25rem 0;
+  color: var(--text-sec);
+  font-size: .9rem;
+}
+.manage-ann-info small {
+  color: var(--text-sec);
+  font-size: .8rem;
+}
+.manage-ann-actions {
+  display: flex;
+  gap: .5rem;
+  flex-shrink: 0;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: .75rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: white;
+}
+.badge.unpublished {
+  background: var(--warn);
+}
+
 /* 所有标题靠左对齐 */
 h1,
 h2,
