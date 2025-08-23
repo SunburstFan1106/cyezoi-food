@@ -1,54 +1,62 @@
 const mongoose = require('mongoose');
 
-const foodSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: [true, '美食名称不能为空'],
-        trim: true
-    },
-    category: {
-        type: String,
-        required: [true, '美食类别不能为空'],
+const ratingDistributionDefault = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+const FoodSchema = new mongoose.Schema({
+    name: { type: String, required: true, trim: true },
+    category: { 
+        type: String, 
+        required: true,
         enum: ['面食', '快餐', '饮品', '小吃', '早餐', '其他']
     },
-    location: {
-        type: String,
-        required: [true, '位置不能为空'],
-        trim: true
+    location: { type: String, required: true, trim: true },
+    description: { type: String, required: true, trim: true },
+    emoji: { type: String, default: '🍽️' },
+    averageRating: { type: Number, default: 0 },
+    totalRating: { type: Number, default: 0 },
+    reviewsCount: { type: Number, default: 0 },
+    ratingDistribution: {
+        type: Map,
+        of: Number,
+        default: () => ratingDistributionDefault
     },
-    rating: {
-        type: Number,
-        required: [true, '评分不能为空'],
-        min: [1, '评分最低1分'],
-        max: [5, '评分最高5分']
-    },
-    reviews: {
-        type: Number,
-        default: 0,
-        min: 0
-    },
-    emoji: {
-        type: String,
-        required: true
-    },
-    description: {
-        type: String,
-        required: [true, '描述不能为空'],
-        maxlength: [500, '描述最多500个字符']
-    },
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    createdByName: {
-        type: String,
-        required: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdByName: { type: String } 
+}, {
+    timestamps: true
 });
 
-module.exports = mongoose.model('Food', foodSchema);
+// 计算平均评分的方法
+FoodSchema.methods.calculateRating = async function() {
+    const Review = mongoose.model('Review');
+    const stats = await Review.aggregate([
+        { $match: { foodId: this._id } },
+        {
+            $group: {
+                _id: null,
+                averageRating: { $avg: '$rating' },
+                totalReviews: { $sum: 1 },
+                ratingCounts: { $push: '$rating' }
+            }
+        }
+    ]);
+
+    if (stats.length > 0) {
+        const stat = stats[0];
+        this.averageRating = Math.round(stat.averageRating * 10) / 10;
+        this.reviewsCount = stat.totalReviews;
+        const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        stat.ratingCounts.forEach(r => { distribution[r]++; });
+        this.ratingDistribution = distribution;
+        this.totalRating = stat.ratingCounts.reduce((a, b) => a + b, 0);
+    } else {
+        this.averageRating = 0;
+        this.reviewsCount = 0;
+        this.ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        this.totalRating = 0;
+    }
+
+    await this.save();
+};
+
+module.exports = mongoose.model('Food', FoodSchema);
