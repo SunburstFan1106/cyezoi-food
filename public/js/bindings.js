@@ -70,6 +70,24 @@ App.prototype.bindEvents = function () {
     }
   }
 
+  // 评论表单提交事件 - 新增
+  const reviewForm = document.getElementById('reviewForm');
+  if (reviewForm) {
+    reviewForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submitReview();
+    });
+  }
+
+  // 编辑评论表单提交事件 - 新增
+  const editReviewForm = document.getElementById('editReviewForm');
+  if (editReviewForm) {
+    editReviewForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.updateReview();
+    });
+  }
+
   // 评论模态外部点击关闭
   const modal = document.getElementById('reviewModal');
   if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) this.closeReviewModal(); });
@@ -98,5 +116,18 @@ App.prototype.bindEvents = function () {
       const page = btn.getAttribute('data-page');
       if (page) btn.addEventListener('click', () => this.loadReviews(this.currentFoodId, Number(page)));
     });
+  }
+};
+
+// 添加全局关闭函数 - 新增
+window.closeReviewModal = function() {
+  if (window.app) {
+    window.app.closeReviewModal();
+  }
+};
+
+window.closeEditReviewModal = function() {
+  if (window.app) {
+    window.app.closeEditReviewModal();
   }
 };

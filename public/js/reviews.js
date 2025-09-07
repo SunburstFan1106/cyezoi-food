@@ -64,7 +64,7 @@ App.prototype.openReviewModal = async function (foodId, foodName) {
   this.currentFoodId = foodId;
   document.getElementById('modalTitle').textContent = `${foodName} - 评价`;
   if (!this.currentUser) {
-    alert('请先登录后再查看评价');
+    // 移除: alert('请先登录后再查看评价');
     this.showAuth();
     return;
   }
@@ -86,13 +86,25 @@ App.prototype.resetReviewForm = function () {
 };
 
 App.prototype.submitReview = async function () {
-  if (!this.currentUser) { alert('请先登录'); return; }
-  if (!this.currentFoodId) { alert('系统错误，请重新打开评论窗口'); return; }
+  if (!this.currentUser) { 
+    // 移除: alert('请先登录'); 
+    return; 
+  }
+  if (!this.currentFoodId) { 
+    // 移除: alert('系统错误，请重新打开评论窗口'); 
+    return; 
+  }
 
   const content = document.getElementById('reviewContent').value.trim();
   const rating = this.currentRating;
-  if (!content) { alert('请填写评论内容'); return; }
-  if (rating === 0) { alert('请选择评分'); return; }
+  if (!content) { 
+    // 移除: alert('请填写评论内容'); 
+    return; 
+  }
+  if (rating === 0) { 
+    // 移除: alert('请选择评分'); 
+    return; 
+  }
 
   try {
     console.log('📤 提交评论:', { foodId: this.currentFoodId, content, rating });
@@ -102,19 +114,16 @@ App.prototype.submitReview = async function () {
     const result = await response.json();
     console.log('📡 评论提交响应:', result);
     if (response.ok) {
-      alert(result.message);
       this.resetReviewForm();
       await this.loadReviews(this.currentFoodId);
       await this.loadFoods();
       this.render();
-      this.bindEvents();
-      setTimeout(() => { this.openReviewModal(this.currentFoodId, '当前美食'); }, 100);
     } else {
-      alert(result.message || '提交失败');
+      // 移除: alert(result.message || '提交失败');
     }
   } catch (error) {
     console.error('❌ 提交评论失败:', error);
-    alert('提交评论失败，请检查网络连接');
+    // 移除: alert('提交评论失败，请检查网络连接');
   }
 };
 
@@ -130,6 +139,7 @@ App.prototype.loadReviews = async function (foodId, page = 1) {
       this.reviewsTotal = result.pagination.totalReviews;
       this.renderReviews();
       this.renderReviewsPagination(result.pagination);
+      this.bindEvents();  // 🔧 添加：重新绑定事件
     } else {
       console.error('❌ 加载评论失败');
       document.getElementById('reviewsList').innerHTML = '<div class="error">加载评论失败</div>';
@@ -193,7 +203,10 @@ App.prototype.renderReviewsPagination = function (pagination) {
 App.prototype.openEditReviewModal = async function (reviewId) {
   this.editingReviewId = reviewId;
   const review = this.currentReviews.find(r => r._id === reviewId);
-  if (!review) { alert('找不到要编辑的评论'); return; }
+  if (!review) { 
+    // 移除: alert('找不到要编辑的评论'); 
+    return; 
+  }
   document.getElementById('editReviewModal').style.display = 'block';
   document.getElementById('editReviewContent').value = review.content;
   this.setEditRating(review.rating);
@@ -221,13 +234,10 @@ App.prototype.updateReview = async function () {
     const result = await response.json();
     console.log('📡 评论更新响应:', result);
     if (response.ok) {
-      alert(result.message);
       this.closeEditReviewModal();
-      await this.loadReviews(this.currentFoodId, this.reviewsPage);
+      await this.loadReviews(this.currentFoodId, this.reviewsPage);  // loadReviews内部已调用bindEvents()
       await this.loadFoods();
       this.render();
-      this.bindEvents();
-      setTimeout(() => { this.openReviewModal(this.currentFoodId, '当前美食'); }, 100);
     } else {
       alert(result.message || '更新失败');
     }
@@ -238,18 +248,21 @@ App.prototype.updateReview = async function () {
 };
 
 App.prototype.toggleReviewLike = async function (reviewId) {
-  if (!this.currentUser) { alert('请先登录'); return; }
+  if (!this.currentUser) { 
+    // 移除: alert('请先登录'); 
+    return; 
+  }
   try {
     const response = await fetch(`${this.apiUrl}/reviews/${reviewId}/like`, { method: 'POST', credentials: 'include' });
     const result = await response.json();
     if (response.ok) {
       await this.loadReviews(this.currentFoodId, this.reviewsPage);
     } else {
-      alert(result.message || '操作失败');
+      // 移除: alert(result.message || '操作失败');
     }
   } catch (error) {
     console.error('❌ 点赞失败:', error);
-    alert('操作失败，请重试');
+    // 移除: alert('操作失败，请重试');
   }
 };
 
@@ -259,17 +272,12 @@ App.prototype.deleteReview = async function (reviewId) {
     const response = await fetch(`${this.apiUrl}/reviews/${reviewId}`, { method: 'DELETE', credentials: 'include' });
     const result = await response.json();
     if (response.ok) {
-      alert(result.message);
       await this.loadReviews(this.currentFoodId, this.reviewsPage);
       await this.loadFoods();
       this.render();
-      this.bindEvents();
-      setTimeout(() => { this.openReviewModal(this.currentFoodId, '当前美食'); }, 100);
-    } else {
-      alert(result.message || '删除失败');
     }
   } catch (error) {
     console.error('❌ 删除评论失败:', error);
-    alert('删除失败，请重试');
+    // 移除: alert('删除失败，请重试');
   }
 };

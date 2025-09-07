@@ -11,7 +11,7 @@
     <div id="modals-root">
         <div id="reviewModal" class="modal" style="display:none;">
             <div class="modal-content">
-                <span class="close" onclick="closeReviewModal()">&times;</span>
+                <span class="close" id="closeReviewModalBtn">&times;</span>
                 <h2 id="modalTitle">评价</h2>
                 <form id="reviewForm">
                     <textarea id="reviewContent" required placeholder="写下你的评价..."></textarea>
@@ -33,7 +33,7 @@
 
         <div id="editReviewModal" class="modal" style="display:none;">
             <div class="modal-content">
-                <span class="close" onclick="closeEditReviewModal()">&times;</span>
+                <span class="close" id="closeEditReviewModalBtn">&times;</span>
                 <h2>编辑评价</h2>
                 <form id="editReviewForm">
                     <textarea id="editReviewContent" required></textarea>
@@ -51,5 +51,19 @@
         </div>
     </div>
     <script type="module" src="/js/main.js"></script>
+    <script>
+        // 在 bindEvents 函数中添加这些行
+
+        // 评论弹窗关闭按钮
+        const closeReviewBtn = document.getElementById('closeReviewModalBtn');
+        if (closeReviewBtn) {
+          closeReviewBtn.addEventListener('click', () => this.closeReviewModal());
+        }
+
+        const closeEditReviewBtn = document.getElementById('closeEditReviewModalBtn');
+        if (closeEditReviewBtn) {
+          closeEditReviewBtn.addEventListener('click', () => this.closeEditReviewModal());
+        }
+    </script>
 </body>
 </html>
