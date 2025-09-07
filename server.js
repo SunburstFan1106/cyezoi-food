@@ -79,6 +79,7 @@ const reviewsRouter = require("./server/routes/reviews");
 const recommendationRouter = require("./server/routes/recommendation");
 const adminRouter = require("./server/routes/admin");
 const announcementsRouter = require("./server/routes/announcements");
+const menuRouter = require("./server/routes/menu");
 
 app.use("/api/foods", foodsRouter);
 app.use("/api/auth", authRouter);
@@ -90,6 +91,7 @@ app.use("/api", recommendationRouter);
 app.use("/api/admin", adminRouter);
 // 公告栏：公开获取，管理员可增删改
 app.use("/api/announcements", announcementsRouter);
+app.use("/api/menu", menuRouter);
 
 // 请求日志中间件
 app.use((req, res, next) => {

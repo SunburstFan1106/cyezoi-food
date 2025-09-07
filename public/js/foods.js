@@ -47,6 +47,8 @@ App.prototype.renderMain = function () {
         </div>
       </div>
 
+      ${this.renderTodayMenu()}
+
       <div class="controls">
         <input type="text" class="search-box" id="searchInput" placeholder="搜索美食、位置...">
         <select class="filter-select" id="categoryFilter">
@@ -379,4 +381,17 @@ App.prototype.handleFilter = function (category) {
       card.style.display = 'none';
     }
   });
+};
+
+// 在 public/js/app-core.js 的 init 函数中添加菜单加载
+App.prototype.init = async function () {
+  console.log("🚀 应用初始化开始...");
+  await this.checkAuth();
+  if (this.currentUser) {
+    await this.loadFoods();
+    await this.loadTodayMenu(); // 添加这一行
+  }
+  this.render();
+  this.bindEvents();
+  console.log("✅ 应用初始化完成");
 };

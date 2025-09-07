@@ -1668,3 +1668,227 @@ h4 {
     width: 100%;
   }
 }
+
+/* 菜单区域样式 */
+.menu-section {
+  background: var(--bg-soft);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.menu-section h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+}
+
+.menu-date {
+  color: var(--text-sec);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.menu-dishes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.menu-dish-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.menu-dish-item:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.15);
+}
+
+.dish-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.dish-emoji {
+  font-size: 1.5rem;
+}
+
+.dish-details {
+  flex: 1;
+}
+
+.dish-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.dish-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-sec);
+}
+
+.dish-category {
+  background: var(--bg-soft);
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+}
+
+.dish-price {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.dish-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem;
+}
+
+.dish-rating .rating-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.btn-review {
+  padding: 0.375rem 0.75rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-review:hover {
+  background: var(--accent-hover);
+}
+
+.no-menu {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-sec);
+}
+
+.no-menu .menu-hint {
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.menu-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+/* 本周菜单模态框样式 */
+.week-menu-modal .modal-content {
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.week-menu-container {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.week-menu-day {
+  background: var(--bg-soft);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid var(--border);
+}
+
+.week-menu-header h4 {
+  margin: 0 0 0.75rem 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.week-menu-dishes {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.week-menu-dish {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.week-menu-dish .dish-emoji {
+  font-size: 1.25rem;
+}
+
+.week-menu-dish .dish-name {
+  flex: 1;
+  color: var(--text-primary);
+}
+
+.week-menu-dish .dish-rating {
+  color: var(--text-sec);
+  font-size: 0.8rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .menu-dish-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .dish-info {
+    width: 100%;
+  }
+  
+  .dish-rating {
+    margin-right: 0;
+    margin-left: auto;
+  }
+  
+  .menu-actions {
+    flex-direction: column;
+  }
+  
+  .week-menu-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) {
+  .week-menu-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .week-menu-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
