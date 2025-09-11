@@ -125,3 +125,15 @@ App.prototype.logout = async function () {
     console.error('❌ 退出登录失败:', error);
   }
 };
+
+// ✅ 新增：返回主页方法
+App.prototype.backToMain = function () {
+  if (this.currentUser) {
+    this.currentView = 'main';
+  } else {
+    // 如果用户未登录，显示登录页面
+    this.currentView = 'auth';
+    this.authMode = 'login';
+  }
+  this.render();
+};

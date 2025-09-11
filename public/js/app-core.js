@@ -71,6 +71,11 @@ App.prototype.render = function () {
   
   root.innerHTML = html;
   
+  // ✅ 关键修复：在DOM更新后重新绑定事件
+  setTimeout(() => {
+    this.bindEvents();
+  }, 0);
+  
   // 如果用户已登录，自动重新挂载公告栏
   if (this.currentUser) {
     setTimeout(async () => {
@@ -140,3 +145,4 @@ App.prototype.bindMenuEvents = function () {
 App.prototype.bindEvents = function () {
   // 占位函数，会被其他模块扩展
 };
+

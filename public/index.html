@@ -9,6 +9,7 @@
 <body>
     <div id="app-root"></div>
     <div id="modals-root">
+        <!-- 现有的美食评价模态框 -->
         <div id="reviewModal" class="modal" style="display:none;">
             <div class="modal-content">
                 <span class="close" id="closeReviewModalBtn">&times;</span>
@@ -25,12 +26,54 @@
                     <div id="ratingFeedback" class="rating-feedback">请选择评分</div>
                     <button type="submit" class="primary">提交评价</button>
                 </form>
-                <div id="reviewsCount" class="reviews-count"></div>
-                <div id="reviewsList"></div>
-                <div id="reviewsPagination" class="pagination"></div>
+                <div id="reviewsSection">
+                    <h3 id="reviewsCount">评价列表</h3>
+                    <div id="reviewsList"></div>
+                    <div id="reviewsPagination"></div>
+                </div>
             </div>
         </div>
-
+        
+        <!-- ✅ 新增：菜单专用评价模态框 -->
+        <div id="menuReviewModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" id="closeMenuReviewModalBtn">&times;</span>
+                <h2 id="menuModalTitle">菜单评价</h2>
+                <div class="menu-dish-info">
+                    <div id="menuDishEmoji" class="menu-dish-emoji">🍽️</div>
+                    <div class="menu-dish-details">
+                        <div id="menuDishName" class="menu-dish-name">菜品名称</div>
+                        <div class="menu-dish-meta" id="menuDishMeta">
+                            <span id="menuDishCategory"></span>
+                            <span id="menuDishPrice"></span>
+                        </div>
+                        <div class="menu-dish-rating" id="menuDishRating">
+                            <span class="rating-stars"></span>
+                            <span class="rating-text">0.0</span>
+                        </div>
+                    </div>
+                </div>
+                <form id="menuReviewForm">
+                    <textarea id="menuReviewContent" required placeholder="分享你对这道菜的评价..."></textarea>
+                    <div id="menuStarRating" class="star-rating">
+                        <span class="star" data-rating="1">★</span>
+                        <span class="star" data-rating="2">★</span>
+                        <span class="star" data-rating="3">★</span>
+                        <span class="star" data-rating="4">★</span>
+                        <span class="star" data-rating="5">★</span>
+                    </div>
+                    <div id="menuRatingFeedback" class="rating-feedback">请选择评分</div>
+                    <button type="submit" class="primary">提交评价</button>
+                </form>
+                <div id="menuReviewsSection">
+                    <h3 id="menuReviewsCount">评价列表</h3>
+                    <div id="menuReviewsList"></div>
+                    <div id="menuReviewsPagination"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 现有的编辑评价模态框 -->
         <div id="editReviewModal" class="modal" style="display:none;">
             <div class="modal-content">
                 <span class="close" id="closeEditReviewModalBtn">&times;</span>

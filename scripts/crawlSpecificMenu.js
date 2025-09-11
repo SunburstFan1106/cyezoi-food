@@ -164,42 +164,46 @@ class SpecificMenuCrawler {
             await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/cyezoi-food');
             
             const foods = [];
-            
-            // 为每个菜品创建Food记录
+            let foundCount = 0;
+            let missingCount = 0;
+            let missingDishes = [];
+
+            // ✅ 修复：仅检查现有菜品，不自动创建
             for (const dishName of menuData.dishes) {
                 let food = await Food.findOne({ name: dishName });
                 
-                if (!food) {
-                    food = new Food({
-                        name: dishName,
-                        category: this.getDishCategory(dishName),
-                        location: '学校食堂',
-                        description: `来自学校官网的菜品: ${dishName}`,
-                        emoji: this.getEmojiForDish(dishName),
-                        averageRating: 0,
-                        reviewsCount: 0,
-                        totalRating: 0,
-                        ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-                        createdByName: 'system'
-                    });
-                    
-                    await food.save();
-                    console.log(`✅ 创建新菜品: ${dishName}`);
+                if (food) {
+                    foods.push(food);
+                    foundCount++;
+                    console.log(`✅ 找到现有菜品: ${dishName}`);
                 } else {
-                    console.log(`⚠️ 菜品已存在: ${dishName}`);
+                    missingCount++;
+                    missingDishes.push(dishName);
+                    console.log(`⚠️ 菜品不存在: ${dishName}`);
                 }
-                
-                foods.push(food);
             }
 
-            // 创建今日菜单
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            console.log(`\n📊 菜品检查结果:`);
+            console.log(`✅ 找到现有菜品: ${foundCount} 个`);
+            console.log(`⚠️ 缺失菜品: ${missingCount} 个`);
             
-            // 删除今日已有菜单
-            await SchoolMenu.deleteMany({ date: today });
-            
+            if (missingDishes.length > 0) {
+                console.log(`\n❌ 以下菜品需要在系统中手动创建:`);
+                missingDishes.forEach(dish => {
+                    console.log(`  - ${dish} (${this.getDishCategory(dish)}) ${this.getEmojiForDish(dish)}`);
+                });
+                console.log(`\n🔧 请先在系统中创建这些菜品，然后重新运行爬虫。`);
+            }
+
+            // 仅为存在的菜品创建菜单
             if (foods.length > 0) {
+                // 创建今日菜单
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                // 删除今日已有菜单
+                await SchoolMenu.deleteMany({ date: today });
+                
                 const lunchMenu = new SchoolMenu({
                     date: today,
                     mealType: 'lunch',
@@ -207,16 +211,21 @@ class SpecificMenuCrawler {
                         foodId: food._id,
                         price: 8 + Math.floor(Math.random() * 12) // 8-20元随机价格
                     })),
-                    source: 'crawl',
+                    source: 'crawler',
                     sourceUrl: this.targetUrl,
                     createdAt: new Date()
                 });
                 
                 await lunchMenu.save();
-                console.log(`✅ 创建今日菜单，包含 ${foods.length} 道菜`);
+                console.log(`✅ 创建今日菜单，包含 ${foods.length} 道现有菜品`);
             }
             
-            return { foodsCreated: foods.length, menuCreated: foods.length > 0 };
+            return { 
+                foodsCreated: 0, // ✅ 修复：不再创建新菜品
+                foodsFound: foundCount,
+                foodsMissing: missingCount,
+                menuCreated: foods.length > 0 
+            };
             
         } catch (error) {
             console.error('❌ 保存数据失败:', error);

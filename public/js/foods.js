@@ -6,8 +6,23 @@ App.prototype.loadFoods = async function () {
     console.log('📥 加载美食数据...');
     const response = await fetch(`${this.apiUrl}/foods`, { credentials: 'include' });
     if (response.ok) {
-      this.foods = await response.json();
-      console.log(`✅ 成功加载 ${this.foods.length} 个美食数据`);
+      const allFoods = await response.json();
+      
+      // ✅ 修复：过滤掉食堂菜品，只保留周边美食
+      this.foods = allFoods.filter(food => {
+        const location = (food.location || '').toLowerCase();
+        
+        // 排除食堂相关的菜品
+        const isCanteenFood = location.includes('食堂') || 
+                             location.includes('曹杨二中') ||
+                             location.includes('学校') ||
+                             location.includes('canteen') ||
+                             location.includes('cafeteria');
+        
+        return !isCanteenFood;
+      });
+      
+      console.log(`✅ 成功加载 ${this.foods.length} 个周边美食数据 (已排除 ${allFoods.length - this.foods.length} 个食堂菜品)`);
     } else {
       console.error('❌ 加载美食数据失败');
       this.foods = [];
@@ -60,6 +75,12 @@ App.prototype.renderMain = function () {
         ${this.currentUser.role === 'admin' ? '<button class="admin-announce-btn" id="adminAnnounceBtn">📢 管理公告</button>' : ''}
       </div>
 
+      <!-- ✅ 修复：明确标示这是周边美食区域 -->
+      <div class="section-header">
+        <h2>🏪 周边美食推荐</h2>
+        <p class="section-description">发现学校周边的特色餐厅和美食小店</p>
+      </div>
+      
       ${this.renderFoodsGrid()}
     </div>
 
@@ -71,7 +92,8 @@ App.prototype.renderFoodsGrid = function () {
   if (!Array.isArray(this.foods) || this.foods.length === 0) {
     return `
       <div class="empty">
-        <p>暂无美食数据，${this.currentUser ? '点击“+ 推荐美食”添加第一条吧！' : '请先登录或注册。'}</p>
+        <p>暂无周边美食数据，${this.currentUser ? '点击"+ 推荐美食"添加第一条吧！' : '请先登录或注册。'}</p>
+        <p class="hint">💡 提示：食堂菜品请在上方"今日菜单"区域查看</p>
       </div>
     `;
   }
@@ -142,29 +164,29 @@ App.prototype.closeAddFoodModal = function () {
 App.prototype.renderAddFoodModal = function () {
   if (!this.addFoodModalVisible) return '';
   return `
-    <div class="modal visible" id="addFoodModal">
-      <div class="modal-content">
+    <div class="modal" style="display:block;">
+      <div class="modal-content food-form">
         <span class="close" id="closeAddFood">&times;</span>
-        <h2>➕ 推荐美食</h2>
-        <form id="addFoodForm" class="food-form">
+        <h2>推荐周边美食</h2>
+        <form id="addFoodForm">
           <div class="form-group">
-            <label>名称</label>
-            <input type="text" name="name" required maxlength="50" placeholder="请输入美食名称">
+            <label>美食名称</label>
+            <input type="text" name="name" required maxlength="50" placeholder="例如：阿姨奶茶、重庆小面">
           </div>
           <div class="form-group">
             <label>类别</label>
             <select name="category" required>
-              <option value="">请选择</option>
+              <option value="">请选择类别</option>
               ${this.validCategories.map(c => `<option value="${c}">${this.categoryEmojiMap[c]} ${c}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
             <label>位置</label>
-            <input type="text" name="location" required maxlength="80" placeholder="档口 / 楼层 / 周边位置">
+            <input type="text" name="location" required maxlength="80" placeholder="具体店铺位置，如：学校东门对面、XX路XX号">
           </div>
           <div class="form-group">
             <label>描述</label>
-            <textarea name="description" required maxlength="200" placeholder="简单介绍一下这个美食..."></textarea>
+            <textarea name="description" required maxlength="200" placeholder="简单介绍一下这个美食的特色、口味、价格等..."></textarea>
           </div>
           <div class="form-group">
             <label>自动表情 (可修改)</label>
@@ -332,28 +354,88 @@ App.prototype.openEditFoodModal = async function (foodId) {
 
 App.prototype.deleteFood = async function (foodId) {
   const food = this.foods.find(f => f._id === foodId);
-  const ownerId = food?.createdBy?._id || food?.createdBy || food?.recommendedBy;
-  if (!(this.currentUser && (this.currentUser.role === 'admin' || (ownerId && String(ownerId) === String(this.currentUser.id))))) {
-    alert('无权限删除该美食');
+  if (!food) {
+    console.log('❌ 找不到要删除的美食');
     return;
   }
-  if (!confirm('确定要删除这个美食吗？此操作不可恢复！')) return;
+  
+  const ownerId = food?.createdBy?._id || food?.createdBy || food?.recommendedBy;
+  if (!(this.currentUser && (this.currentUser.role === 'admin' || (ownerId && String(ownerId) === String(this.currentUser.id))))) {
+    console.log('❌ 无权限删除该美食');
+    return;
+  }
+  
+  // ✅ 调用自定义确认对话框
+  const confirmed = await this.showDeleteConfirm(food.name);
+  if (!confirmed) return;
 
   try {
-    const response = await fetch(`${this.apiUrl}/foods/${foodId}`, { method: 'DELETE', credentials: 'include' });
+    console.log('🗑️ 删除美食:', foodId);
+    const response = await fetch(`${this.apiUrl}/foods/${foodId}`, { 
+      method: 'DELETE', 
+      credentials: 'include' 
+    });
     const result = await response.json();
+    
     if (response.ok) {
-      alert(result.message);
+      console.log('✅ 删除成功:', result.message);
       await this.loadFoods();
       this.render();
-      this.bindEvents();
     } else {
-      alert(result.message || '删除失败');
+      console.error('❌ 删除失败:', result.message);
     }
   } catch (error) {
     console.error('❌ 删除美食失败:', error);
-    alert('删除失败，请检查网络连接');
   }
+};
+
+// ✅ 新增：自定义删除确认对话框
+App.prototype.showDeleteConfirm = function (foodName) {
+  return new Promise((resolve) => {
+    // 创建自定义确认对话框
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.style.zIndex = '10000';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <h3>⚠️ 确认删除</h3>
+        <p>确定要删除美食「<strong>${foodName}</strong>」吗？</p>
+        <p style="color: #999; font-size: 14px;">此操作不可恢复！</p>
+        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+          <button id="confirmDeleteBtn" style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">确认删除</button>
+          <button id="cancelDeleteBtn" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">取消</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    
+    const confirmBtn = modal.querySelector('#confirmDeleteBtn');
+    const cancelBtn = modal.querySelector('#cancelDeleteBtn');
+    
+    const cleanup = () => {
+      modal.remove();
+    };
+    
+    confirmBtn.addEventListener('click', () => {
+      cleanup();
+      resolve(true);
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+      cleanup();
+      resolve(false);
+    });
+    
+    // 点击外部关闭
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        cleanup();
+        resolve(false);
+      }
+    });
+  });
 };
 
 // 搜索与筛选

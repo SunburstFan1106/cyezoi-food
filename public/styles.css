@@ -1892,3 +1892,105 @@ h4 {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* 菜单评价模态框样式 */
+#menuReviewModal .modal-content {
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.menu-dish-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.menu-dish-emoji {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.menu-dish-details {
+  flex: 1;
+}
+
+.menu-dish-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.menu-dish-meta {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-sec);
+}
+
+.menu-dish-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.menu-dish-rating .rating-text {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.menu-review-item {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.menu-review-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 菜单评价按钮特殊样式 */
+.menu-dish-item .btn-review {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.menu-dish-item .btn-review:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* ✅ 新增：区域标题样式 */
+.section-header {
+  margin: 2rem 0 1.5rem;
+  text-align: center;
+}
+
+.section-header h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.section-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-sec);
+  opacity: 0.8;
+}
+
+/* 提示文本样式 */
+.empty .hint {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+  opacity: 0.7;
+}
