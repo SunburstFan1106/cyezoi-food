@@ -1994,3 +1994,348 @@ h4 {
   color: var(--accent);
   opacity: 0.7;
 }
+
+/* 添加菜单模态框样式 */
+.add-menu-modal .modal-content {
+    max-width: 600px;
+    width: 90%;
+}
+
+.add-menu-modal .form-group {
+    margin-bottom: 20px;
+}
+
+.add-menu-modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.add-menu-modal input,
+.add-menu-modal select,
+.add-menu-modal textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.add-menu-modal textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-family: inherit;
+}
+
+.add-menu-modal .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.add-menu-btn {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+}
+
+.add-menu-btn:hover {
+    background: linear-gradient(135deg, #229954, #27ae60);
+}
+
+/* 每日菜单样式 */
+.daily-meals {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.meal-section {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.meal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.meal-header h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meal-dishes {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.no-dishes {
+  text-align: center;
+  color: var(--text-sec);
+  padding: 1rem;
+  font-style: italic;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+/* 添加完整日菜单模态框样式 */
+.add-daily-menu-modal .modal-content {
+  max-width: 800px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.meals-section {
+  display: grid;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.meal-input-section {
+  background: var(--bg-soft);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.meal-input-section h4 {
+  margin: 0 0 0.75rem 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.meal-input-section textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.meal-input-section textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus);
+}
+
+.add-daily-menu-btn {
+  background: linear-gradient(135deg, #8e44ad, #9b59b6);
+  color: white;
+}
+
+.add-daily-menu-btn:hover {
+  background: linear-gradient(135deg, #7d3c98, #8e44ad);
+}
+
+.edit-meal-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.edit-meal-btn:hover {
+  background: var(--accent-hover);
+}
+
+.add-daily-menu-modal .modal-content {
+  max-width: 600px; /* 增加模态框宽度 */
+  width: 90vw; /* 响应式宽度 */
+}
+
+.meal-input-section textarea {
+  width: 100%; /* 确保撑满容器 */
+  max-width: 100%; /* 防止超出容器 */
+  min-width: 100%; /* 防止缩小 */
+  box-sizing: border-box; /* 包含内边距和边框 */
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  background: var(--bg-alt);
+  color: var(--text);
+  transition: var(--transition);
+}
+
+.meal-input-section textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus);
+}
+
+/* 确保所有表单输入框都撑满宽度 */
+.add-daily-menu-modal input,
+.add-daily-menu-modal select,
+.add-daily-menu-modal textarea {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 添加单个菜单模态框样式 */
+.add-menu-modal .modal-content {
+  max-width: 500px;
+  width: 90vw;
+}
+
+.add-menu-modal textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  background: var(--bg-alt);
+  color: var(--text);
+  transition: var(--transition);
+}
+
+.add-menu-modal textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus);
+}
+
+.add-daily-menu-modal .modal-content {
+  max-width: 700px !important; /* 增加模态框宽度并强制应用 */
+  width: 95vw !important; /* 响应式宽度 */
+  min-width: 500px; /* 最小宽度 */
+}
+
+.add-daily-menu-modal .form-group {
+  width: 100% !important;
+  margin-bottom: 1.5rem;
+}
+
+.add-daily-menu-modal label {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* 强制所有输入框撑满宽度 */
+.add-daily-menu-modal input,
+.add-daily-menu-modal select,
+.add-daily-menu-modal textarea {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 12px 16px !important;
+  border: 2px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  background: var(--bg-alt) !important;
+  color: var(--text) !important;
+  transition: var(--transition) !important;
+  resize: vertical !important;
+}
+
+.add-daily-menu-modal textarea {
+  min-height: 120px !important;
+  max-height: 300px !important;
+}
+
+.add-daily-menu-modal input:focus,
+.add-daily-menu-modal select:focus,
+.add-daily-menu-modal textarea:focus {
+  outline: none !important;
+  border-color: var(--accent) !important;
+  box-shadow: var(--focus) !important;
+}
+
+/* 餐次输入区域样式 */
+.meals-section {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+}
+
+.meal-input-section {
+  width: 100% !important;
+  background: var(--bg-soft);
+  padding: 1rem 1.2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.meal-input-section h4 {
+  margin: 0 0 0.8rem 0 !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+}
+
+/* 移除可能冲突的样式 */
+.add-daily-menu-modal .modal-content * {
+  max-width: none !important;
+}
+
+/* 表单动作按钮区域 */
+.add-daily-menu-modal .form-actions {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 1rem !important;
+  margin-top: 2rem !important;
+  padding-top: 1rem !important;
+  border-top: 1px solid var(--border);
+}
+
+/* 日期输入框特殊处理 */
+.add-daily-menu-modal input[type="date"] {
+  width: 200px !important; /* 日期输入框不需要撑满 */
+  max-width: 200px !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .add-daily-menu-modal .modal-content {
+    max-width: 95vw !important;
+    min-width: unset !important;
+    margin: 10px !important;
+  }
+  
+  .add-daily-menu-modal input[type="date"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
